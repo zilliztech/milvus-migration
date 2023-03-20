@@ -1,0 +1,188 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Migration Swagger API",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/dump": {
+            "post": {
+                "description": "migration dump files",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Migration"
+                ],
+                "summary": "migration dump",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "RequestId",
+                        "name": "RequestId",
+                        "in": "header"
+                    },
+                    {
+                        "description": "param",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.DumpParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_job": {
+            "get": {
+                "description": "get job info",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Migration"
+                ],
+                "summary": "get job info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "RequestId",
+                        "name": "RequestId",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "jobId",
+                        "name": "jobId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthy": {
+            "get": {
+                "description": "check server healthy",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Migration"
+                ],
+                "summary": "check healthy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "RequestId",
+                        "name": "RequestId",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/load": {
+            "post": {
+                "description": "migration load files",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Migration"
+                ],
+                "summary": "migration load",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "RequestId",
+                        "name": "RequestId",
+                        "in": "header"
+                    },
+                    {
+                        "description": "param",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.LoadParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "param.DumpParam": {
+            "type": "object",
+            "properties": {
+                "async": {
+                    "type": "boolean"
+                },
+                "collectionNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "requestId": {
+                    "type": "string"
+                }
+            }
+        },
+        "param.LoadParam": {
+            "type": "object",
+            "properties": {
+                "async": {
+                    "type": "boolean"
+                },
+                "collectionNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "requestId": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,14 @@
+filters:
+  ".*":
+    reviewers:
+      - BeyonderXie
+      - huanghaoyuanhhy
+      - Thomas-HuWei
+      - yelusion2
+
+    approvers:
+      - BeyonderXie
+      - huanghaoyuanhhy
+      - Thomas-HuWei
+      - yelusion2
+

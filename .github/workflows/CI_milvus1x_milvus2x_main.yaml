@@ -1,0 +1,102 @@
+name: Test on pull request
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'asap/**'
+      - 'cmd/**'
+      - 'configs/**'
+      - 'core/**'
+      - 'internal/**'
+      - 'server/**'
+      - 'starter/**'
+      - 'storage/**'
+      - 'test/**'
+      - 'testfiles/**'
+      - '!**.md'
+      - '.github/workflows/**'
+      - 'deployment/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'asap/**'
+      - 'cmd/**'
+      - 'configs/**'
+      - 'core/**'
+      - 'internal/**'
+      - 'server/**'
+      - 'starter/**'
+      - 'storage/**'
+      - 'test/**'
+      - 'testfiles/**'
+      - '!**.md'
+      - '.github/workflows/**'
+      - 'deployment/**'
+  workflow_dispatch:
+
+jobs:
+  test-milvus-migration-cli-milvus1x-main:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        deploy_tools: [docker-compose]
+        milvus_2_x_mode: [standalone, cluster]
+    steps:
+      - uses: actions/checkout@main
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          cache: pip
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.20.2'
+          cache: true
+
+      - name: Build
+        shell: bash
+        run: |
+          go build
+
+      - name: Milvus 2.x deploy
+        timeout-minutes: 15
+        shell: bash
+        working-directory: deployment/${{ matrix.milvus_2_x_mode }}
+        run: |
+          docker-compose up -d
+          bash ../../scripts/check_healthy.sh
+          docker-compose ps -a
+
+      - name: Prepare config
+        shell: bash
+        run: |
+          cp testfiles/config/migration.yaml ./
+
+      - name: dump
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          ./milvus-migration dump
+
+      - name: load
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          ./milvus-migration load
+
+      - name: Install dependency
+        working-directory: testfiles
+        shell: bash
+        run: |
+          pip install -r requirements.txt
+
+      - name: Verify data
+        shell: bash
+        run: |
+          python testfiles/testcases/verify_data_milvus1x.py

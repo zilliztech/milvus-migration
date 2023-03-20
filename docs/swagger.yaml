@@ -1,0 +1,122 @@
+basePath: /api/v1
+definitions:
+  param.DumpParam:
+    properties:
+      async:
+        type: boolean
+      collectionNames:
+        items:
+          type: string
+        type: array
+      requestId:
+        type: string
+    type: object
+  param.LoadParam:
+    properties:
+      async:
+        type: boolean
+      collectionNames:
+        items:
+          type: string
+        type: array
+      requestId:
+        type: string
+    type: object
+info:
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Migration Swagger API
+  version: "1.0"
+paths:
+  /dump:
+    post:
+      description: migration dump files
+      parameters:
+      - description: RequestId
+        in: header
+        name: RequestId
+        type: string
+      - description: param
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/param.DumpParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: migration dump
+      tags:
+      - Migration
+  /get_job:
+    get:
+      description: get job info
+      parameters:
+      - description: RequestId
+        in: header
+        name: RequestId
+        type: string
+      - description: jobId
+        in: query
+        name: jobId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: get job info
+      tags:
+      - Migration
+  /healthy:
+    get:
+      description: check server healthy
+      parameters:
+      - description: RequestId
+        in: header
+        name: RequestId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: check healthy
+      tags:
+      - Migration
+  /load:
+    post:
+      description: migration load files
+      parameters:
+      - description: RequestId
+        in: header
+        name: RequestId
+        type: string
+      - description: param
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/param.LoadParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: migration load
+      tags:
+      - Migration
+swagger: "2.0"

@@ -1,0 +1,10 @@
+.idea
+target/
+
+milvus-migration
+.DS_Store
+files
+migration.log
+configs/
+
+dist/

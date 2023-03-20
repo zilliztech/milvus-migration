@@ -1,0 +1,1 @@
+{"collections":[{"collection":"test1w","metric":1,"rows":10000,"dim":256,"segments":[{"collection":"test1w","segment":"1678354366132931000","dim":256,"rows":10000,"fileSize":10320000}]}],"rows":10000}
