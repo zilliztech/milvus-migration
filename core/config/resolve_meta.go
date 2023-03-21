@@ -6,22 +6,32 @@ import (
 	"github.com/spf13/viper"
 )
 
-func resolveMetaConfig(sourceMode string, v *viper.Viper) (*MetaConfig, error) {
-	switch sourceMode {
+func resolveMetaConfig(v *viper.Viper) (*MetaConfig, error) {
+
+	metaMode := v.GetString("meta.mode")
+	if metaMode == "" {
+		return nil, fmt.Errorf("[meta.mode] can not empty")
+	}
+
+	switch metaMode {
+	case "mock":
+		return resolveMetaInMock(v)
+	case "sqlite":
+		return resolveMetaInSqlite(v)
+	case "mysql":
+		return resolveMetaInMysql(v)
 	case "remote":
-		return resolveMetaConfigInRemote(v)
-	case "local":
-		return resolveMetaConfigInLocal(v)
+		return resolveMetaInRemote(v)
 	default:
-		msg := fmt.Sprintf("invalid [source.mode], %s", sourceMode)
+		msg := fmt.Sprintf("invalid [meta.mode], %s", metaMode)
 		return nil, errors.New(msg)
 	}
 }
 
-func resolveMetaConfigInRemote(v *viper.Viper) (*MetaConfig, error) {
-	metaFile := v.GetString("source.remote.metaFile")
+func resolveMetaInRemote(v *viper.Viper) (*MetaConfig, error) {
+	metaFile := v.GetString("remote.metaFile")
 	if metaFile == "" {
-		return nil, errors.New("meta file is empty, please check config [source.remote.metaFile]")
+		return nil, errors.New("meta file is empty, please check config [remote.metaFile]")
 	}
 	return &MetaConfig{
 		MetaMode:       "remote",
@@ -29,54 +39,38 @@ func resolveMetaConfigInRemote(v *viper.Viper) (*MetaConfig, error) {
 	}, nil
 }
 
-func resolveMetaConfigInLocal(v *viper.Viper) (*MetaConfig, error) {
-	metaMode := v.GetString("source.local.meta.mode")
-	switch metaMode {
-	case "mock":
-		return resolveLocalMetaInMock(metaMode, v)
-	case "sqlite":
-		return resolveLocalMetaInSqlite(metaMode, v)
-	case "mysql":
-		return resolveLocalMetaInMysql(metaMode, v)
-	default:
-		msg := fmt.Sprintf("invalid [source.local.meta.mode], %s", metaMode)
-		return nil, errors.New(msg)
-	}
-
-}
-
-func resolveLocalMetaInMock(metaMode string, v *viper.Viper) (*MetaConfig, error) {
-	mockFile := v.GetString("source.local.meta.mockFile")
+func resolveMetaInMock(v *viper.Viper) (*MetaConfig, error) {
+	mockFile := v.GetString("meta.mockFile")
 	if mockFile == "" {
-		return nil, errors.New("empty [source.local.meta.mockFile], pls check config")
+		return nil, errors.New("empty [meta.mockFile], pls check config")
 	}
 
 	return &MetaConfig{
-		MetaMode:      metaMode,
+		MetaMode:      "mock",
 		LocalMockFile: mockFile,
 	}, nil
 }
 
-func resolveLocalMetaInSqlite(metaMode string, v *viper.Viper) (*MetaConfig, error) {
-	sqliteFile := v.GetString("source.local.meta.sqliteFile")
+func resolveMetaInSqlite(v *viper.Viper) (*MetaConfig, error) {
+	sqliteFile := v.GetString("meta.sqliteFile")
 	if sqliteFile == "" {
-		return nil, errors.New("empty [source.local.meta.sqliteFile], pls check config")
+		return nil, errors.New("empty [meta.sqliteFile], pls check config")
 	}
 
 	return &MetaConfig{
-		MetaMode:        metaMode,
+		MetaMode:        "sqlite",
 		LocalSqliteFile: sqliteFile,
 	}, nil
 }
 
-func resolveLocalMetaInMysql(metaMode string, v *viper.Viper) (*MetaConfig, error) {
-	url := v.GetString("source.local.meta.mysql.url")
+func resolveMetaInMysql(v *viper.Viper) (*MetaConfig, error) {
+	url := v.GetString("meta.mysqlUrl")
 	if url == "" {
-		return nil, errors.New("empty [source.local.meta.mysql.url], pls check config")
+		return nil, errors.New("empty [meta.mysqlUrl], pls check config")
 	}
 
 	return &MetaConfig{
-		MetaMode:      metaMode,
+		MetaMode:      "mysql",
 		LocalMysqlURL: url,
 	}, nil
 }

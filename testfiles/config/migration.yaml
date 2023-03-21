@@ -13,13 +13,14 @@ loader:
   worker:
     limit: 2
 
+meta:
+  mode: mock
+  mockFile: ./testfiles/milvus1x/test1w/meta.json
+
 source:
   mode: local
 
   local:
-    meta:
-      mode: mock
-      mockFile: ./testfiles/milvus1x/test1w/meta.json
     tablesDir: ./testfiles/milvus1x/test1w/tables
 
 target:
