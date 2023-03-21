@@ -16,10 +16,32 @@ type MetaHelper struct {
 	metaCfg *config.MetaConfig
 }
 
-func NewMetaHelper(config *config.MigrationConfig) *MetaHelper {
+func NewMetaHelperForDumper(config *config.MigrationConfig) *MetaHelper {
 	return &MetaHelper{
 		cfg:     config,
 		metaCfg: config.MetaConfig,
+	}
+}
+
+func NewMetaHelperForLoader(cfg *config.MigrationConfig) *MetaHelper {
+	_, fileFullName := util.GetOutputMetaJsonFilePath(cfg.TargetOutputDir)
+	var metaCfg *config.MetaConfig
+	switch cfg.TargetMode {
+	case "local":
+		metaCfg = &config.MetaConfig{
+			MetaMode:      "mock",
+			LocalMockFile: fileFullName,
+		}
+	case "remote":
+		metaCfg = &config.MetaConfig{
+			MetaMode:       "remote",
+			RemoteMetaFile: fileFullName,
+		}
+	}
+
+	return &MetaHelper{
+		cfg:     cfg,
+		metaCfg: metaCfg,
 	}
 }
 
