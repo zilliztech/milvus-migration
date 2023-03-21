@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/viper"
-	"github.com/zilliztech/milvus-migration/core/data"
-	"github.com/zilliztech/milvus-migration/core/gstore"
 	"path/filepath"
 	"strings"
 )
@@ -84,7 +82,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		metaConfig, err := resolveMetaConfig(sourceMode, v)
+		metaConfig, err := resolveMetaConfig(v)
 		if err != nil {
 			return nil, err
 		}
@@ -92,23 +90,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		cfg.SourceTablesDir = sourceTablesDir
 	}
 
-	// put temp config
-	//tempCfg, err := resolveTempConfig(v)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//gstore.PutTempConfig(tempCfg)
-
 	return &cfg, nil
-}
-
-// Deprecated
-func resolveTempConfig(v *viper.Viper) (*data.TempConfig, error) {
-	return &data.TempConfig{
-		YamlPath:      v.ConfigFileUsed(),
-		ViperV:        v,
-		CollectionDim: v.GetInt(gstore.TempCollectionDim),
-	}, nil
 }
 
 func assertTargetMode(v *viper.Viper) (string, error) {
@@ -213,24 +195,6 @@ func resolveMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
 		UserName: v.GetString("target.milvus2x.username"),
 		Password: v.GetString("target.milvus2x.password"),
 	}
-}
-
-
-func assertMilvus2xParam(v *viper.Viper) error {
-	err := notEmpty("target.milvus2x.endpoint", v)
-	if err != nil {
-		return err
-	}
-	err = notEmpty("target.milvus2x.username", v)
-	if err != nil {
-		return err
-	}
-	err = notEmpty("target.milvus2x.password", v)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func resolveDumpWorkConfig(v *viper.Viper) (*DumperWorkConfig, error) {

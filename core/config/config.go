@@ -67,7 +67,6 @@ type MetaConfig struct {
 	LocalMockFile string
 	// local sqlite
 	LocalSqliteFile string
-
 	// local mysql
 	LocalMysqlURL string
 
