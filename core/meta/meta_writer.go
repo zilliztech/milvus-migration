@@ -56,6 +56,7 @@ func (this *MetaHelper) writeMetaFileToRemote(ctx context.Context, metaJson *mil
 		&common.FileParam{
 			FileDir:      outputDir,
 			FileFullName: path.Join(outputDir, "meta.json"),
+			BucketName:   this.cfg.TargetRemote.BucketName,
 		})
 
 	jsonByte, err := json.Marshal(metaJson)
