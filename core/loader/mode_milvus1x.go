@@ -14,7 +14,7 @@ import (
 )
 
 func (this *Milvus2xLoader) loadRuntimeMetaInMilvus1xMode(ctx context.Context) error {
-	metaHelper := meta.NewMetaHelper(this.cfg)
+	metaHelper := meta.NewMetaHelperForLoader(this.cfg)
 
 	metaJSON, err := metaHelper.ReadMeta(ctx)
 	if err != nil {

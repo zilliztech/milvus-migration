@@ -16,7 +16,7 @@ import (
 
 func (this *Dumper) doDumpInMilvus1xMode(ctx context.Context) error {
 	// new meta helper
-	metaHelper := meta.NewMetaHelper(this.cfg)
+	metaHelper := meta.NewMetaHelperForDumper(this.cfg)
 
 	// read meta
 	metaJson, err := metaHelper.ReadMeta(ctx)
@@ -25,6 +25,12 @@ func (this *Dumper) doDumpInMilvus1xMode(ctx context.Context) error {
 		return err
 	}
 	gstore.SetTotalTasks(this.jobId, len(metaCols))
+
+	// dump write meta.json first for load no need to read meta again
+	err = metaHelper.WriteMetaFile(ctx, metaJson)
+	if err != nil {
+		return err
+	}
 
 	// migration data
 	splitArray := util.SplitArray(metaCols, this.concurLimit)

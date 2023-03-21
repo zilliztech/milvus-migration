@@ -12,14 +12,39 @@ import (
 )
 
 type MetaHelper struct {
-	cfg     *config.MigrationConfig
-	metaCfg *config.MetaConfig
+	cfg           *config.MigrationConfig
+	readRemoteCfg *config.RemoteConfig
+	metaCfg       *config.MetaConfig
 }
 
-func NewMetaHelper(config *config.MigrationConfig) *MetaHelper {
+func NewMetaHelperForDumper(config *config.MigrationConfig) *MetaHelper {
 	return &MetaHelper{
-		cfg:     config,
-		metaCfg: config.MetaConfig,
+		cfg:           config,
+		readRemoteCfg: config.SourceRemote,
+		metaCfg:       config.MetaConfig,
+	}
+}
+
+func NewMetaHelperForLoader(cfg *config.MigrationConfig) *MetaHelper {
+	_, fileFullName := util.GetOutputMetaJsonFilePath(cfg.TargetOutputDir)
+	var metaCfg *config.MetaConfig
+	switch cfg.TargetMode {
+	case "local":
+		metaCfg = &config.MetaConfig{
+			MetaMode:      "mock",
+			LocalMockFile: fileFullName,
+		}
+	case "remote":
+		metaCfg = &config.MetaConfig{
+			MetaMode:       "remote",
+			RemoteMetaFile: fileFullName,
+		}
+	}
+
+	return &MetaHelper{
+		cfg:           cfg,
+		readRemoteCfg: cfg.TargetRemote,
+		metaCfg:       metaCfg,
 	}
 }
 
@@ -82,12 +107,12 @@ func (this *MetaHelper) getMeta(ctx context.Context) (*milvustype.MetaJSON, erro
 func (this *MetaHelper) getRemoteMeta(ctx context.Context) (*milvustype.MetaJSON, error) {
 
 	log.Info("[MetaHelper] begin to get remote meta, ",
-		zap.String("remoteCloud", this.cfg.SourceRemote.Cloud),
-		zap.String("remoteRegion", this.cfg.SourceRemote.Region),
-		zap.String("remoteBucket", this.cfg.SourceRemote.BucketName),
+		zap.String("remoteCloud", this.readRemoteCfg.Cloud),
+		zap.String("remoteRegion", this.readRemoteCfg.Region),
+		zap.String("remoteBucket", this.readRemoteCfg.BucketName),
 		zap.String("remoteMetafile", this.metaCfg.RemoteMetaFile))
 
-	reader := NewRemoteMetaReader(this.cfg.SourceRemote, this.metaCfg.RemoteMetaFile)
+	reader := NewRemoteMetaReader(this.readRemoteCfg, this.metaCfg.RemoteMetaFile)
 	return reader.ReadMeta(ctx)
 }
 

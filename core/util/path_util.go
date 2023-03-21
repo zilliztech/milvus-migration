@@ -35,6 +35,11 @@ func GetOutputRVFilePath(outputDir string, segColInfo *milvustype.SegColInfo) (s
 	return targetDir, targetFileName
 }
 
+func GetOutputMetaJsonFilePath(outputDir string) (string, string) {
+	outputMetaJson := filepath.Join(outputDir, "meta.json")
+	return outputDir, outputMetaJson
+}
+
 func GenerateFaissIdFilePath(outputDir string, colName string) (string, string) {
 	targetDir := filepath.Join(outputDir, colName)
 	fileName := filepath.Join(targetDir, "id.npy")
