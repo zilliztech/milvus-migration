@@ -29,7 +29,7 @@ func resolveMetaConfig(v *viper.Viper) (*MetaConfig, error) {
 }
 
 func resolveMetaInRemote(v *viper.Viper) (*MetaConfig, error) {
-	metaFile := v.GetString("remoteMetaFile")
+	metaFile := v.GetString("meta.remoteMetaFile")
 	if metaFile == "" {
 		return nil, errors.New("empty [meta.remoteMetaFile], pls check config")
 	}
