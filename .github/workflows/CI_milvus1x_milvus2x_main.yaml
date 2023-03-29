@@ -97,6 +97,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Verify data
+        timeout-minutes: 5
         shell: bash
         run: |
           python testfiles/testcases/verify_data_milvus1x.py
