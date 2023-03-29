@@ -99,7 +99,7 @@ func (c *S3Client) ListObjectsPage(_ context.Context, i ListObjectPageInput) Lis
 
 	pageSize := i.PageSize
 	if pageSize == 0 {
-		pageSize = 1000
+		pageSize = _defaultPageSize
 	}
 
 	params := s3.ListObjectsV2Input{Bucket: aws.String(i.Bucket), MaxKeys: pageSize, Prefix: prefix}
