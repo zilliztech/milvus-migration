@@ -29,9 +29,9 @@ func resolveMetaConfig(v *viper.Viper) (*MetaConfig, error) {
 }
 
 func resolveMetaInRemote(v *viper.Viper) (*MetaConfig, error) {
-	metaFile := v.GetString("remote.metaFile")
+	metaFile := v.GetString("remoteMetaFile")
 	if metaFile == "" {
-		return nil, errors.New("meta file is empty, please check config [remote.metaFile]")
+		return nil, errors.New("empty [meta.remoteMetaFile], pls check config")
 	}
 	return &MetaConfig{
 		MetaMode:       "remote",
