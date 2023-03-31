@@ -65,7 +65,7 @@ jobs:
           go build
 
       - name: Milvus 2.x deploy
-        timeout-minutes: 15
+        timeout-minutes: 10
         shell: bash
         working-directory: deployment/${{ matrix.milvus_2_x_mode }}
         run: |
