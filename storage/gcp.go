@@ -76,6 +76,10 @@ func NewGCPClient(cfg Cfg) (*MinioClient, error) {
 		opts.Transport = trans
 		opts.Creds = credentials.NewStaticV2("", "", "")
 	} else {
+		if len(opts.Region) == 0 {
+			// region can not be empty
+			opts.Region = "some-region"
+		}
 		opts.Creds = credentials.NewStaticV2(cfg.AK, cfg.SK, "")
 	}
 
