@@ -97,7 +97,6 @@ func (this *Milvus2x) createCollection(ctx context.Context, createParam *common.
 				DataType: entity.FieldTypeFloatVector,
 				TypeParams: map[string]string{
 					entity.TypeParamDim: strconv.Itoa(createParam.Dim),
-					"metric_type":       createParam.MetricType,
 				},
 			},
 		},
