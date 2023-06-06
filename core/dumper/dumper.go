@@ -3,6 +3,7 @@ package dumper
 import (
 	"context"
 	"fmt"
+	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -10,6 +11,7 @@ import (
 	"time"
 )
 
+// Dumper : do the dump work
 type Dumper struct {
 	cfg         *config.MigrationConfig
 	concurLimit int
@@ -45,11 +47,14 @@ func (this *Dumper) Run(ctx context.Context) error {
 	return nil
 }
 
+// doDumpByWorkMode ：start dump task entry in different modes
 func (this *Dumper) doDumpByWorkMode(ctx context.Context) error {
-	switch this.workMode {
-	case "milvus1x":
+	switch common.DumpMode(this.workMode) {
+	case common.Elasticsearch:
+		return this.doDumpInEsMode(ctx)
+	case common.Milvus1x:
 		return this.doDumpInMilvus1xMode(ctx)
-	case "faiss":
+	case common.Faiss:
 		return this.doDumpInFaissMode(ctx)
 	default:
 		return fmt.Errorf("not support workMode %s", this.workMode)

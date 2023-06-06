@@ -1,6 +1,7 @@
 package main
 
 import (
+	esconvert "github.com/zilliztech/milvus-migration/core/convert/es"
 	"log"
 	"strconv"
 	"strings"
@@ -50,24 +51,64 @@ func scrollVector(esClient *elasticsearch.Client) {
 
 	scrollID = gjson.Get(json, "_scroll_id").String()
 
-	printVector(batchNum, scrollID, gjson.Get(json, "hits.hits"))
+	var sb strings.Builder
+
+	hits := gjson.Get(json, "hits.hits")
+	//printVector(batchNum, scrollID, hits)
 	//log.Println("IDs     ", gjson.Get(json, "hits.hits.#._id")) //#  表示数组写法？
 
+	b := esconvert.Transform(hits, true)
+	sb.Write(b)
+
 	// Perform the scroll requests in sequence
-	foreachVector(esClient, batchNum, scrollID)
+	str := foreachVector(esClient, batchNum, scrollID)
+	sb.WriteString(str)
+	sb.Write(esconvert.EndCharacter())
+
+	fullStr := sb.String()
+	log.Println("json len: ", len(fullStr))
+	log.Println("json: ", fullStr)
 
 }
 
 func printVector(batchNum int, scrollID string, hits gjson.Result) {
+
+	//id := gjson.Get(hits.Raw, "#._id").String()
+
+	//gjson.Get(hits.Raw, "#._source")
+
+	//buildJson(hits)
+
 	log.Println("Batch   ", batchNum)
 	log.Println("ScrollID", scrollID)
 	log.Println("IDs     ", gjson.Get(hits.Raw, "#._id"))
 	log.Println("Vector     ", gjson.Get(hits.Raw, "#._source.my_vector"))
 	log.Println("Title     ", gjson.Get(hits.Raw, "#._source.title"))
 	log.Println(strings.Repeat("-", 80))
+
 }
 
-func foreachVector(esClient *elasticsearch.Client, batchNum int, scrollID string) {
+func buildJson(hits gjson.Result) {
+	var sb strings.Builder
+	sb.WriteString("[")
+	arr := hits.Array()
+	for _, ar := range arr {
+		sb.WriteString("{")
+		sb.WriteString(`"id":"`)
+		sb.WriteString(ar.Get("_id").String())
+		sb.WriteString(`",`)
+		src := ar.Get("_source").String()[1:]
+		sb.WriteString(src)
+		sb.WriteString(",")
+	}
+
+	log.Println("sb:   ", sb.String())
+}
+
+func foreachVector(esClient *elasticsearch.Client, batchNum int,
+	scrollID string) string {
+
+	var sb strings.Builder
 	for {
 		batchNum++
 
@@ -95,9 +136,12 @@ func foreachVector(esClient *elasticsearch.Client, batchNum int, scrollID string
 			log.Println("Finished scrolling")
 			break
 		} else {
-			printVector(batchNum, scrollID, hits)
+			//printVector(batchNum, scrollID, hits, false)
+			b := esconvert.Transform(hits, false)
+			sb.Write(b)
 		}
 	}
+	return sb.String()
 }
 
 func firstVector(esClient *elasticsearch.Client) string {

@@ -1,0 +1,35 @@
+dumper:
+  worker:
+    limit: 2
+    workMode: elasticsearch
+    reader:
+      bufferSize: 50
+    writer:
+      bufferSize: 5
+
+loader:
+  worker:
+    limit: 2
+
+meta:
+  mode: mock
+  mockFile: /Users/zilliz/gitCode/cloud_team/milvus-migration/configs/es_meta.json
+
+source:
+  es:
+    security: non  #non, cert, password, fingerPrint,
+    urls:
+      - http://localhost:9200
+    username: xxx
+    password: xxx
+    cert: /local/certificates/ca/ca.crt
+    fingerPrint: "xxxxxxx...."
+
+target:
+  mode: local
+  local:
+    outputDir: /Users/zilliz/gitCode/cloud_team/milvus-migration/files/es/target
+  milvus2x:
+    endpoint: xxxxx:19530
+    username: xxxxx
+    password: xxxxx

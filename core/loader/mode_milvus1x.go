@@ -48,7 +48,7 @@ func (this *Milvus2xLoader) getFileNames(metaJSON *milvustype.MetaJSON) error {
 			filesMap.Set(getFileMapKey(&segment), []string{uidFile, rvFile})
 		}
 
-		sameColParams, err := convertSegColInfoList2CollectionParams(col.Segments, &col)
+		sameColParams, err := convertSegColInfoList2CollectionParams(col.Segments, &col) //convert
 		if err != nil {
 			return err
 		}

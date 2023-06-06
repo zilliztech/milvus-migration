@@ -52,6 +52,12 @@ func GenerateFaissDataFilePath(outputDir string, colName string) (string, string
 	return targetDir, fileName
 }
 
+func GenerateESDataFilePath(outputDir string, index string) (string, string) {
+	targetDir := filepath.Join(outputDir, index)
+	fileName := filepath.Join(targetDir, "data.json")
+	return targetDir, fileName
+}
+
 func GetAddressAndPortFromEndpoint(endpoint string) (string, string, error) {
 	if endpoint == "" {
 		return "", "", errors.New("endpoint cannot empty")

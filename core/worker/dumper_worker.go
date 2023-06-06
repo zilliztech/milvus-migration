@@ -47,7 +47,7 @@ func (this *DumperWorker) Work(ctx context.Context) error {
 	}
 
 	// async to gc
-	go runtime.GC()
+	go runtime.GC() // todo:  need GC ??
 	return nil
 }
 
@@ -55,7 +55,7 @@ func (this *DumperWorker) pipeline4ReadAndWrite(ctx context.Context) error {
 
 	dq := this.dataQueue
 
-	g, subCtx := errgroup.WithContext(ctx)
+	g, subCtx := errgroup.WithContext(ctx) //todo: subCtx?
 	g.Go(func() error {
 		return produce(subCtx, this.reader, dq)
 	})
@@ -69,27 +69,33 @@ func (this *DumperWorker) pipeline4ReadAndWrite(ctx context.Context) error {
 
 func produce(ctx context.Context, pb reader.Publisher, dq *dataqueue.IOQueue) error {
 	defer func(dq *dataqueue.IOQueue) {
+		//flush pipe writer buffer
 		err := dq.Close()
 		if err != nil {
-			log.Error("close produce error", zap.Error(err))
+			log.Error("Flush and Close pipe writer error!", zap.Error(err))
 		}
+		log.Info("Flush and Close pipe writer.")
 	}(dq)
+
+	defer func() {
+		//close source reader
+		err := pb.AfterPublish()
+		if err != nil {
+			log.Error("close source reader error", zap.Error(err))
+		}
+		log.Info("Closed source reader.")
+	}()
 
 	err := pb.BeforePublish()
 	if err != nil {
 		return err
 	}
 
+	//write to pipe writer buffer
 	err = pb.PublishTo(dq)
 	if err != nil {
 		return err
 	}
-
-	err = pb.AfterPublish()
-	if err != nil {
-		return err
-	}
-
 	return err
 }
 

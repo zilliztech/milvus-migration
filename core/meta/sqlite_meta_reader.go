@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/dbmodel"
+	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/core/type/milvustype"
 	"github.com/zilliztech/milvus-migration/core/writer"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -121,6 +122,11 @@ func (this *SqliteMetaReader) GenerateMetaJsonFile(ctx context.Context, sqliteFi
 	}
 
 	return writeMetaFile(ctx, segCols, outputDir)
+}
+
+func (this *SqliteMetaReader) GetESMeta(ctx context.Context) (*estype.MetaJSON, error) {
+	//todo:
+	return nil, errors.New("not supported read es meta from sqlite")
 }
 
 func writeMetaFile(ctx context.Context, metaJson *milvustype.MetaJSON, outputDir string) error {

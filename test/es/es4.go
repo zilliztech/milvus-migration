@@ -229,12 +229,12 @@ package main
 //	}
 //}
 //
-//// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//// WithOpaqueID adds the X-Opaque-ScrollId header to the HTTP request.
 //func (f Scroll) WithOpaqueID(s string) func(*ScrollRequest) {
 //	return func(r *ScrollRequest) {
 //		if r.Header == nil {
 //			r.Header = make(http.Header)
 //		}
-//		r.Header.Set("X-Opaque-Id", s)
+//		r.Header.Set("X-Opaque-ScrollId", s)
 //	}
 //}

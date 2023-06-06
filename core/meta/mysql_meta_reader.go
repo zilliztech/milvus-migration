@@ -2,6 +2,8 @@ package meta
 
 import (
 	"context"
+	"errors"
+	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/core/type/milvustype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"gorm.io/driver/mysql"
@@ -39,4 +41,9 @@ func (m *MysqlMetaReader) GenerateMetaJsonFile(ctx context.Context, mysqlURL str
 	}
 
 	return writeMetaFile(ctx, segCols, outputDir)
+}
+
+func (m *MysqlMetaReader) GetESMeta(ctx context.Context) (*estype.MetaJSON, error) {
+	//todo:
+	return nil, errors.New("not supported read es meta from mysql")
 }

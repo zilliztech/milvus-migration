@@ -20,16 +20,16 @@ func Dump(ctx context.Context, configFile string, param *param.DumpParam, jobId 
 		return err
 	}
 
-	// options
-	if param != nil && param.Collections != nil {
-		insCfg.FilterCols = param.Collections
-	}
+	// options:  ./milvus-migration load --col=coll1,coll2
+	stepFilterCols(insCfg, param)
+
 	dump := dumper.NewDumperWithConfig(insCfg, jobId)
 
 	log.LL(ctx).Info("[Dumper] begin to do dump!")
 	return dump.Run(ctx)
 }
 
+// Load function: start load logic
 func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId string) error {
 	// store
 	err := stepStore(jobId)

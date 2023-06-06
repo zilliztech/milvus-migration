@@ -223,7 +223,7 @@ func NewBaseReader(fileParam common.FileParam, bufSize int) *BaseReader {
 		byte1:     make([]byte, 1),
 		byte4:     make([]byte, 4),
 		byte8:     make([]byte, 8),
-		order:     binary.LittleEndian,
+		order:     binary.LittleEndian, //serialize byte order
 		fileParam: fileParam,
 		bufSize:   bufSize * oneKB,
 	}

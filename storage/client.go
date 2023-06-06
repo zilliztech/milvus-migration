@@ -8,6 +8,7 @@ import (
 
 type Provider string
 
+// remote client type const
 const (
 	AWS     Provider = "aws"
 	GCP     Provider = "gcp"
