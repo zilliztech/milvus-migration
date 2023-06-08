@@ -1,5 +1,7 @@
 package common
 
+import "github.com/milvus-io/milvus-sdk-go/v2/entity"
+
 type FileParam struct {
 	FileFullName string
 	FileDir      string
@@ -14,4 +16,8 @@ type CollectionParam struct {
 
 	// not common value
 	FileMapKey string
+}
+type CollectionInfo struct {
+	Param  *CollectionParam
+	Fields []*entity.Field
 }

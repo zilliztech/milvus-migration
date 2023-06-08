@@ -50,11 +50,11 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 	return nil
 }
 
-func (dp *Dumper) workESBatch(ctx context.Context, idxCfgs []estype.IdxCfg, metaJson *estype.MetaJSON) error {
+func (dp *Dumper) workESBatch(ctx context.Context, idxCfgs []*estype.IdxCfg, metaJson *estype.MetaJSON) error {
 	var g errgroup.Group
 	for _, idxInfo := range idxCfgs {
 		g.Go(func() error {
-			return dp.workInESMode(ctx, &idxInfo, metaJson)
+			return dp.workInESMode(ctx, idxInfo, metaJson)
 		})
 	}
 	return g.Wait()

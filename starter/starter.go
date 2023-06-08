@@ -21,7 +21,9 @@ func Dump(ctx context.Context, configFile string, param *param.DumpParam, jobId 
 	}
 
 	// options:  ./milvus-migration load --col=coll1,coll2
-	stepFilterCols(insCfg, param)
+	if param != nil {
+		stepFilterCols(insCfg, param.Collections)
+	}
 
 	dump := dumper.NewDumperWithConfig(insCfg, jobId)
 
@@ -44,8 +46,8 @@ func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId 
 	}
 
 	// param
-	if param != nil && param.Collections != nil {
-		insCfg.FilterCols = param.Collections
+	if param != nil {
+		stepFilterCols(insCfg, param.Collections)
 	}
 
 	load, err := loader.NewMilvus2xLoader(insCfg, jobId)

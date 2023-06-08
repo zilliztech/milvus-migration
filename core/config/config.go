@@ -198,7 +198,7 @@ func InitConfigFile(configFile string) (*viper.Viper, error) {
 		log.Info("input configFile is empty, will read from dir")
 		v := viper.New()
 		v.AddConfigPath(".")
-		v.AddConfigPath("./configs")
+		v.AddConfigPath("./files")
 		v.SetConfigType("yaml")
 		v.SetConfigName("migration.yaml")
 

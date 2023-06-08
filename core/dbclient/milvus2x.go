@@ -43,7 +43,7 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 		milvus, err = client.NewDefaultGrpcClientWithURI(ctx, cfg.Endpoint, cfg.UserName, cfg.Password)
 	}
 	if err != nil {
-		log.Error("[Milvus2x] new milvus client error")
+		log.Error("[Milvus2x] new milvus client error", zap.Error(err))
 		return nil, err
 	}
 

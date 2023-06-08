@@ -57,7 +57,7 @@ func scrollVector(esClient *elasticsearch.Client) {
 	//printVector(batchNum, scrollID, hits)
 	//log.Println("IDs     ", gjson.Get(json, "hits.hits.#._id")) //#  表示数组写法？
 
-	b := esconvert.Transform(hits, true)
+	b := esconvert.ToMilvus2Format(hits, true)
 	sb.Write(b)
 
 	// Perform the scroll requests in sequence
@@ -137,7 +137,7 @@ func foreachVector(esClient *elasticsearch.Client, batchNum int,
 			break
 		} else {
 			//printVector(batchNum, scrollID, hits, false)
-			b := esconvert.Transform(hits, false)
+			b := esconvert.ToMilvus2Format(hits, false)
 			sb.Write(b)
 		}
 	}

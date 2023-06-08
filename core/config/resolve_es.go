@@ -17,20 +17,21 @@ func getSourceESConfig(v *viper.Viper) (*ESConfig, error) {
 	if urls == nil || len(urls) == 0 {
 		return nil, errors.New("ES urls is empty!")
 	}
+
+	username = strings.TrimSpace(v.GetString("source.es.username"))
+	password = strings.TrimSpace(v.GetString("source.es.password"))
+	cert = strings.TrimSpace(v.GetString("source.es.cert"))
+	fingerprint = strings.TrimSpace(v.GetString("source.es.fingerprint"))
 	switch security {
 	case common.User:
-		username = strings.TrimSpace(v.GetString("source.es.username"))
-		password = strings.TrimSpace(v.GetString("source.es.password"))
 		if username == "" || password == "" {
 			return nil, errors.New("ES username and password cannot be empty!")
 		}
 	case common.Cert:
-		cert = strings.TrimSpace(v.GetString("source.es.cert"))
 		if cert == "" {
 			return nil, errors.New("ES cert param is empty!")
 		}
 	case common.FingerPrint:
-		fingerprint = strings.TrimSpace(v.GetString("source.es.fingerprint"))
 		if fingerprint == "" {
 			return nil, errors.New("ES fingerprint param is empty!")
 		}

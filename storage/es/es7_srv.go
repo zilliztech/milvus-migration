@@ -10,6 +10,7 @@ import (
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -90,11 +91,18 @@ func (es7 *ES7ServerClient) filterField(idxCfg *estype.IdxCfg) func(*esapi.Searc
 	if idxCfg.FilterFields == nil || len(idxCfg.FilterFields) <= 0 {
 		return nil
 	}
-	return es7._client.Search.WithSource(idxCfg.FilterFields...)
+	fields := getFieldNames(idxCfg)
+	return es7._client.Search.WithSource(fields...)
 }
 
 func (es7 *ES7ServerClient) packResult(resp *esapi.Response) (*SearchRes, error) {
 	json := read(resp.Body)
+
+	if strings.HasPrefix(json, `{"error"`) {
+		log.Error("ES response error", zap.String("Response", json))
+		return nil, errors.New(json)
+	}
+
 	newScrollID := gjson.Get(json, "_scroll_id").String()
 	isFinish := false
 	hits := gjson.Get(json, "hits.hits")

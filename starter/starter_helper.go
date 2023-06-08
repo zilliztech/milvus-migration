@@ -5,7 +5,6 @@ import (
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/internal/log"
-	"github.com/zilliztech/milvus-migration/starter/param"
 	"go.uber.org/zap"
 )
 
@@ -24,13 +23,13 @@ func stepConfig(configFile string) (*config.MigrationConfig, error) {
 	return config.ResolveInsConfig(viper)
 }
 
-func stepFilterCols(migrationCfg *config.MigrationConfig, param *param.DumpParam) {
+func stepFilterCols(migrationCfg *config.MigrationConfig, collections []string) {
 	//ES not support filter cols, bcz es7 above version index only support one type or not support type
 	if common.DumpMode(migrationCfg.DumperWorkCfg.WorkMode) == common.Elasticsearch {
 		return
 	}
-	if param != nil && param.Collections != nil {
-		migrationCfg.FilterCols = param.Collections
+	if collections != nil {
+		migrationCfg.FilterCols = collections
 	}
 
 }

@@ -6,6 +6,8 @@ import (
 )
 
 var COMMA = ","
+var JSON_START = `{"rows":[`
+var JSON_END = "]}"
 var SquareL = "["
 var SquareR = "]"
 var BraceL = "{"
@@ -15,11 +17,12 @@ var BraceL = "{"
 var JsonIdKey = `"id":"`
 var _SOURCE = "_source"
 var _ID = "_id"
+var MILVUS_ID = "id"
 
-func Transform(hits gjson.Result, first bool) []byte {
+func ToMilvus2Format(hits gjson.Result, first bool) []byte {
 	var sb strings.Builder
 	if first {
-		sb.WriteString(SquareL)
+		sb.WriteString(JSON_START)
 	} else {
 		sb.WriteString(COMMA)
 	}
@@ -39,5 +42,5 @@ func Transform(hits gjson.Result, first bool) []byte {
 }
 
 func EndCharacter() []byte {
-	return []byte(SquareR)
+	return []byte(JSON_END)
 }

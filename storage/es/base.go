@@ -58,3 +58,10 @@ func read(r io.Reader) string {
 	b.ReadFrom(r)
 	return b.String()
 }
+func getFieldNames(idxCfg *estype.IdxCfg) []string {
+	fields := make([]string, 0, len(idxCfg.FilterFields))
+	for _, f := range idxCfg.FilterFields {
+		fields = append(fields, f.Name)
+	}
+	return fields
+}

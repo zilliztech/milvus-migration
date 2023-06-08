@@ -7,6 +7,8 @@ import (
 	"github.com/zilliztech/milvus-migration/storage/es"
 )
 
+var DEFAULT_BATCH_SIZE = 200
+
 type ESSource struct {
 	Cfg       *config.ESConfig
 	IdxCfg    *estype.IdxCfg
@@ -18,11 +20,15 @@ type ESSource struct {
 func NewESSource(readCfg *config.ReadConfig) *ESSource {
 	esCfg := readCfg.ESConfig
 	esCli := es_factory.GetESCli(esCfg)
+	batchSize := DEFAULT_BATCH_SIZE
+	if readCfg.BufSize > 0 {
+		batchSize = readCfg.BufSize
+	}
 	esr := &ESSource{
 		Cli:       esCli,
 		Cfg:       esCfg,
 		IdxCfg:    readCfg.ESIdxCfg,
-		BatchSize: readCfg.BufSize,
+		BatchSize: batchSize,
 	}
 	return esr
 }

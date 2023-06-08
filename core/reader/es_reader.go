@@ -63,7 +63,7 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 		log.Warn("[ESReader] end to write, json data is empty")
 		return nil
 	}
-	b := esconvert.Transform(data.Hits, true)
+	b := esconvert.ToMilvus2Format(data.Hits, true)
 	w.Write(b)
 
 	//2. foreach write next data from es source
@@ -76,7 +76,7 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 		if data.IsEmpty {
 			break
 		}
-		b = esconvert.Transform(data.Hits, false)
+		b = esconvert.ToMilvus2Format(data.Hits, false)
 		w.Write(b)
 	}
 	w.Write(esconvert.EndCharacter())
