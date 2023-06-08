@@ -102,7 +102,7 @@ func (this *Milvus2x) createCollection(ctx context.Context, createParam *common.
 		},
 	}
 
-	err := this.milvus.CreateCollection(ctx, schema, int32(createParam.ShardsNum))
+	err := this.milvus.CreateCollection(ctx, schema, int32(createParam.ShardsNum), client.WithConsistencyLevel(entity.ClBounded))
 	if err != nil {
 		log.Error("call milvus2x CreateCollection error", zap.Error(err))
 		return err
