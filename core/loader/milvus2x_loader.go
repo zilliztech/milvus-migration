@@ -217,7 +217,7 @@ func (this *Milvus2xLoader) compareResult(ctx context.Context) error {
 		afterTotalCount = afterTotalCount + afterCount
 	}
 
-	log.LL(ctx).Info("[Loader] Static Total: ", zap.Int("Total Collections", len(this.runtimeCollectionNames)),
+	log.LL(ctx).Info("[Loader] Static Total", zap.Int("Total Collections", len(this.runtimeCollectionNames)),
 		zap.Int("beforeTotalCount", beforeTotalCount),
 		zap.Int("afterTotalCount", afterTotalCount),
 		zap.Int("totalIncrease", afterTotalCount-beforeTotalCount))

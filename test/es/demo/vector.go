@@ -1,14 +1,20 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/tidwall/gjson"
 	esconvert "github.com/zilliztech/milvus-migration/core/convert/es"
+	bizlog "github.com/zilliztech/milvus-migration/internal/log"
+	"go.uber.org/zap"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/tidwall/gjson"
 )
 
 func main() {
@@ -16,11 +22,69 @@ func main() {
 
 	esClient := getClient()
 
+	//var index = "test-vector"
+
 	// Index 100 documents into the "test-scroll" index
 	//insertVector(esClient)
 
-	scrollVector(esClient)
+	//scrollVector(esClient)
 
+	//Count("test-vector", esClient)
+
+	//Info(index, esClient)
+	//Mapping(index, esClient)
+
+	var index2 = "test-vector2"
+	insertVector2(esClient, index2)
+}
+
+func insertVector2(es *elasticsearch.Client, index string) {
+
+	log.Println("Indexing the documents...")
+	for i := 1; i <= 100; i++ {
+
+		val := GetInsertValue(i)
+		bytess, _ := json.Marshal(val)
+		//body := string(bytess)
+		res, err := es.Index(
+			index, bytes.NewReader(bytess),
+			es.Index.WithDocumentID(strconv.Itoa(i)),
+		)
+		if err != nil || res.IsError() {
+			log.Fatalf("Error: %s: %s", err, res)
+		}
+	}
+	es.Indices.Refresh(es.Indices.Refresh.WithIndex("test-vector"))
+}
+
+func GetInsertValue(i int) *InsertValue {
+	var bl bool
+	if i%2 == 0 {
+		bl = true
+	}
+	vector := make([]float32, 0, 512)
+	for i = 0; i < 512; i++ {
+		vector = append(vector, rand.Float32())
+	}
+	return &InsertValue{
+		Text1: "text1" + strconv.Itoa(i),
+		Keyw1: "keyxx" + strconv.Itoa(i),
+		Long1: rand.Int63(),
+		Int1:  rand.Int31(),
+		Bl2:   bl,
+		Doub1: rand.Float64(),
+		Dvec:  vector,
+	}
+}
+
+type InsertValue struct {
+	Text1 string    `json:"text1"`
+	Keyw1 string    `json:"keyw1"`
+	Long1 int64     `json:"long1"`
+	Int1  int32     `json:"int1"`
+	Bl2   bool      `json:"bl2"`
+	Doub1 float64   `json:"doub1"`
+	Dvec  []float32 `json:"dvec"`
 }
 
 func insertVector(es *elasticsearch.Client) {
@@ -163,4 +227,96 @@ func firstVector(esClient *elasticsearch.Client) string {
 	// Handle the first batch of data and extract the scrollID
 	json := read(res.Body)
 	return json
+}
+
+func Count(index string, client *elasticsearch.Client) error {
+	resp, err := client.Count(client.Count.WithIndex(index))
+	if err != nil {
+		bizlog.Error("Count ES Index Response Error",
+			zap.String("Index", index), zap.Error(err))
+		return err
+	}
+	if resp.IsError() {
+		bizlog.Error("Count ES Index Response Data Error", zap.Int("code", resp.StatusCode),
+			zap.String("Index", index), zap.String("error", resp.String()))
+		return errors.New(resp.String())
+	}
+	bizlog.Info(resp.String())
+	json := read(resp.Body)
+	log.Println(json)
+	return err
+}
+
+func Mapping(index string, client *elasticsearch.Client) error {
+	resp, err := client.Indices.GetMapping(client.Indices.GetMapping.WithIndex(index))
+	err2 := printMappingInfo(index, err, resp)
+	if err2 != nil {
+		return err2
+	}
+	return err
+}
+
+func printMappingInfo(index string, err error, resp *esapi.Response) error {
+	if err != nil {
+		bizlog.Error(" ES Response Error",
+			zap.String("Index", index), zap.Error(err))
+		return err
+	}
+	if resp.IsError() {
+		bizlog.Error(" ES  Response Data Error", zap.Int("code", resp.StatusCode),
+			zap.String("Index", index), zap.String("error", resp.String()))
+		return errors.New(resp.String())
+	}
+	bizlog.Info(resp.String())
+	json := read(resp.Body)
+	log.Println(json)
+	/*
+		{"test-vector":{"mappings":{"properties":{"my_vector":{"type":"dense_vector","dims":3},"title":{"type":"keyword"}}}}}
+	*/
+	//bjson.Unmarshal(json, maps)
+	res := gjson.Get(json, index+".mappings.properties")
+	mapResult := res.Map()
+	for key, res := range mapResult {
+		log.Println(key)
+		log.Println(res.String())
+	}
+	return nil
+}
+
+func Info(index string, client *elasticsearch.Client) error {
+	resp, err := client.Info(client.Info.WithHuman())
+	if err != nil {
+		bizlog.Error("Count ES Index Response Error",
+			zap.String("Index", index), zap.Error(err))
+		return err
+	}
+	if resp.IsError() {
+		bizlog.Error("Count ES Index Response Data Error", zap.Int("code", resp.StatusCode),
+			zap.String("Index", index), zap.String("error", resp.String()))
+		return errors.New(resp.String())
+	}
+	bizlog.Info(resp.String())
+	json := read(resp.Body)
+	log.Println(json)
+	return err
+	/*
+		{
+		  "name" : "8962736dd32a",
+		  "cluster_name" : "elasticsearch",
+		  "cluster_uuid" : "tc_P2LchQDyhvD_fGqdIMA",
+		  "version" : {
+		    "number" : "7.17.0",
+		    "build_flavor" : "default",
+		    "build_type" : "docker",
+		    "build_hash" : "bee86328705acaa9a6daede7140defd4d9ec56bd",
+		    "build_date" : "2022-01-28T08:36:04.875279988Z",
+		    "build_snapshot" : false,
+		    "lucene_version" : "8.11.1",
+		    "minimum_wire_compatibility_version" : "6.8.0",
+		    "minimum_index_compatibility_version" : "6.0.0-beta1"
+		  },
+		  "tagline" : "You Know, for Search"
+		}
+
+	*/
 }

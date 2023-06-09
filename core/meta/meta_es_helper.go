@@ -3,6 +3,7 @@ package meta
 import (
 	"context"
 	"errors"
+	"github.com/zilliztech/milvus-migration/core/check"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/core/util"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -19,6 +20,12 @@ func (this *MetaHelper) ReadESMeta(ctx context.Context) (*estype.MetaJSON, error
 	if metaJson.IdxCfgs == nil || len(metaJson.IdxCfgs) == 0 {
 		return nil, errors.New("read es meta index is empty")
 	}
+
+	err = check.VerifyESField(metaJson)
+	if err != nil {
+		return nil, err
+	}
+
 	return metaJson, err
 }
 

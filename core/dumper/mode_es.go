@@ -33,39 +33,40 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 		return err
 	}
 	// split index array to split concurrent work group
-	splitArray := util.SplitArray(esMetaJson.IdxCfgs, dp.concurLimit)
+	//splitArray := util.SplitArray(esMetaJson.IdxCfgs, dp.concurLimit)
 
 	log.LL(ctx).Info("dump ES split indexs for concurrent work",
 		zap.Int("IndexSize", len(esMetaJson.IdxCfgs)),
 		zap.Int("ConcurLimit", dp.concurLimit),
-		zap.Int("QueueSize", len(splitArray)),
+		//zap.Int("QueueSize", len(splitArray)),
 	)
 
-	for _, idxInfos := range splitArray {
-		err := dp.workESBatch(ctx, idxInfos, esMetaJson)
-		if err != nil {
-			return err
-		}
+	//for _, idxInfos := range splitArray {
+	//	err := dp.workESBatch(ctx, idxInfos, esMetaJson)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+
+	err = dp.workESBatch(ctx, esMetaJson.IdxCfgs, esMetaJson)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func (dp *Dumper) workESBatch(ctx context.Context, idxCfgs []*estype.IdxCfg, metaJson *estype.MetaJSON) error {
 	var g errgroup.Group
-	for _, idxInfo := range idxCfgs {
+	for i, _ := range idxCfgs {
 		g.Go(func() error {
-			return dp.workInESMode(ctx, idxInfo, metaJson)
+			return dp.workInESMode(ctx, idxCfgs[i], metaJson)
 		})
 	}
 	return g.Wait()
 }
 
 func (dp *Dumper) workInESMode(ctx context.Context, idxInfo *estype.IdxCfg, metaJson *estype.MetaJSON) error {
-	var g errgroup.Group
-	g.Go(func() error {
-		return dp.es2Json(ctx, idxInfo, metaJson)
-	})
-	err := g.Wait()
+	err := dp.es2Json(ctx, idxInfo, metaJson)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,7 @@ func (dp *Dumper) es2Json(ctx context.Context, idxInfo *estype.IdxCfg, metaJson 
 
 	wokCfg := cloneWorkConfig(dp.cfg, metaJson, idxInfo)
 
-	wok, err := worker.NewDumperWorker(*wokCfg)
+	wok, err := worker.NewDumperWorker(wokCfg)
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (dp *Dumper) es2Json(ctx context.Context, idxInfo *estype.IdxCfg, metaJson 
 	return nil
 }
 
-func cloneWorkConfig(migrationCfg *config.MigrationConfig, esMeta *estype.MetaJSON, idxCfg *estype.IdxCfg) *config.DumperWorkConfig {
+func cloneWorkConfig(migrationCfg *config.MigrationConfig, esMeta *estype.MetaJSON, idxCfg *estype.IdxCfg) config.DumperWorkConfig {
 
 	migrationCfg.SourceESConfig.Version = esMeta.Version
 
@@ -130,5 +131,5 @@ func cloneWorkConfig(migrationCfg *config.MigrationConfig, esMeta *estype.MetaJS
 			RemoteConfig: migrationCfg.TargetRemote,
 		},
 	}
-	return &clonedCfg
+	return clonedCfg
 }

@@ -28,6 +28,7 @@ type ESType string
 
 const (
 	Text        ESType = "text"
+	String      ESType = "string"
 	Keyword     ESType = "keyword"
 	Long        ESType = "long"
 	Integer     ESType = "integer"
@@ -35,7 +36,29 @@ const (
 	Byte        ESType = "byte"
 	Boolean     ESType = "boolean"
 	DenseVector ESType = "dense_vector"
+	Double      ESType = "double"
+	Float       ESType = "float"
+	HalfFloat   ESType = "half_float"
+	ScaledFloat ESType = "scaled_float"
+	Object      ESType = "object"
 )
+
+var SupportESTypeMap = map[string]entity.FieldType{
+	string(Text):        entity.FieldTypeVarChar,
+	string(String):      entity.FieldTypeVarChar,
+	string(Keyword):     entity.FieldTypeVarChar,
+	string(Long):        entity.FieldTypeInt64,
+	string(Integer):     entity.FieldTypeInt32,
+	string(Short):       entity.FieldTypeInt16,
+	string(Byte):        entity.FieldTypeInt8,
+	string(Boolean):     entity.FieldTypeBool,
+	string(DenseVector): entity.FieldTypeFloatVector,
+	string(Double):      entity.FieldTypeDouble,
+	string(Float):       entity.FieldTypeFloat,
+	string(HalfFloat):   entity.FieldTypeFloat,
+	string(ScaledFloat): entity.FieldTypeFloat,
+	string(Object):      entity.FieldTypeJSON,
+}
 
 const VarcharMaxLen = "65535"
 
@@ -72,27 +95,20 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 			Name: field.Name,
 		}
 		_fields = append(_fields, milvusField)
+
+		milvusType, ok := SupportESTypeMap[field.Type]
+		if !ok {
+			return nil, errors.New("not support es field type " + field.Type)
+		}
+		milvusField.DataType = milvusType
+		//field specify config
 		switch field.Type {
-		case string(Text), string(Keyword):
-			milvusField.DataType = entity.FieldTypeVarChar
+		case string(Text), string(Keyword), string(String):
 			milvusField.TypeParams = map[string]string{
 				entity.TypeParamMaxLength: VarcharMaxLen,
 			}
 		case string(DenseVector):
-			milvusField.DataType = entity.FieldTypeFloatVector
 			milvusField.TypeParams = map[string]string{entity.TypeParamDim: strconv.Itoa(field.Dims)}
-		case string(Long):
-			milvusField.DataType = entity.FieldTypeInt64
-		case string(Integer):
-			milvusField.DataType = entity.FieldTypeInt32
-		case string(Short):
-			milvusField.DataType = entity.FieldTypeInt16
-		case string(Byte):
-			milvusField.DataType = entity.FieldTypeInt8
-		case string(Boolean):
-			milvusField.DataType = entity.FieldTypeBool
-		default:
-			return nil, errors.New("not support es field type " + field.Type)
 		}
 	}
 	return _fields, nil

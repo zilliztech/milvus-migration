@@ -52,6 +52,11 @@ func _createES8Cli(esConfig *config.ESConfig) (*elasticsearch.Client, error) {
 }
 
 func (es8 *ES8ServerClient) InitScroll(idxCfg *estype.IdxCfg, batchSize int) (*SearchRes, error) {
+
+	err := es8.Count(idxCfg)
+	if err != nil {
+		return nil, err
+	}
 	log.Info("start es8 scrolling index", zap.String("index", idxCfg.Index),
 		zap.Int("BatchSize", batchSize))
 
@@ -83,6 +88,28 @@ func (es8 *ES8ServerClient) NextScroll(scrollID string) (*SearchRes, error) {
 		return nil, errors.New(resp.String())
 	}
 	return es8.packResult(resp)
+}
+
+func (es7 *ES8ServerClient) Count(idxCfg *estype.IdxCfg) error {
+	resp, err := es7._client.Count(es7._client.Count.WithIndex(idxCfg.Index))
+	if err != nil {
+		log.Error("Count ES Index Response Error",
+			zap.String("Index", idxCfg.Index), zap.Error(err))
+		return err
+	}
+	if resp.IsError() {
+		log.Error("Count ES Index Response Data Error", zap.Int("code", resp.StatusCode),
+			zap.String("Index", idxCfg.Index), zap.String("error", resp.String()))
+		return errors.New(resp.String())
+	}
+	data := read(resp.Body)
+	log.Info("[Count ES Info]", zap.String("Index", idxCfg.Index), zap.String("CountInfo", data))
+	count := gjson.Get(data, "count").Int()
+	if count <= 0 {
+		log.Warn("Count ES data is empty", zap.String("Index", idxCfg.Index))
+		return errors.New("Count ES data is empty, Index:" + idxCfg.Index)
+	}
+	return nil
 }
 
 func (es8 *ES8ServerClient) filterField(idxCfg *estype.IdxCfg) func(*esapi.SearchRequest) {
