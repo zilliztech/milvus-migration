@@ -85,8 +85,9 @@ func (cus *CusFieldMilvus2xLoader) loadData(ctx context.Context) error {
 func (cus *CusFieldMilvus2xLoader) loadDataBatch(ctx context.Context, collections []string) error {
 	g, subCtx := errgroup.WithContext(ctx)
 	for _, col := range collections {
+		finalCol := col
 		g.Go(func() error {
-			return cus.LoadDataOne(subCtx, col)
+			return cus.LoadDataOne(subCtx, finalCol)
 		})
 	}
 	return g.Wait()

@@ -32,25 +32,20 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// split index array to split concurrent work group
-	//splitArray := util.SplitArray(esMetaJson.IdxCfgs, dp.concurLimit)
+	//split index array to split concurrent work group
+	splitArray := util.SplitArray(esMetaJson.IdxCfgs, dp.concurLimit)
 
 	log.LL(ctx).Info("dump ES split indexs for concurrent work",
 		zap.Int("IndexSize", len(esMetaJson.IdxCfgs)),
 		zap.Int("ConcurLimit", dp.concurLimit),
-		//zap.Int("QueueSize", len(splitArray)),
+		zap.Int("QueueSize", len(splitArray)),
 	)
 
-	//for _, idxInfos := range splitArray {
-	//	err := dp.workESBatch(ctx, idxInfos, esMetaJson)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-
-	err = dp.workESBatch(ctx, esMetaJson.IdxCfgs, esMetaJson)
-	if err != nil {
-		return err
+	for _, idxInfos := range splitArray {
+		err := dp.workESBatch(ctx, idxInfos, esMetaJson)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -58,8 +53,9 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 func (dp *Dumper) workESBatch(ctx context.Context, idxCfgs []*estype.IdxCfg, metaJson *estype.MetaJSON) error {
 	var g errgroup.Group
 	for i, _ := range idxCfgs {
+		finalI := i
 		g.Go(func() error {
-			return dp.workInESMode(ctx, idxCfgs[i], metaJson)
+			return dp.workInESMode(ctx, idxCfgs[finalI], metaJson)
 		})
 	}
 	return g.Wait()
