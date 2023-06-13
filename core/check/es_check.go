@@ -16,26 +16,33 @@ var Underline = "_"
 func VerifyESMetaCfg(metaJson *estype.MetaJSON) error {
 
 	for _, idx := range metaJson.IdxCfgs {
-		if len(idx.FilterFields) <= 0 {
+		if len(idx.Fields) <= 0 {
 			return errors.New("[Verify ES Meta file] Index migration Field is empty, IndexName:" + idx.Index)
 		}
-
 		if idx.MilvusCfg == nil {
 			idx.MilvusCfg = &estype.MilvusCfg{ShardNum: common.MAX_SHARD_NUM}
+		}
+
+		err := verifyShardNum(idx)
+		if err != nil {
+			return err
+		}
+
+		//如果自定义了milvus collection name, 则用它作为collection name
+		if len(idx.MilvusCfg.Collection) > 0 {
+			err2 := verifyMilvusCollName(idx)
+			if err2 != nil {
+				return err2
+			}
 		} else {
-			if idx.MilvusCfg.ShardNum > common.MAX_SHARD_NUM {
-				return errors.New("[Verify ES Meta file] milvus shardNum can not > " + string(common.MAX_SHARD_NUM))
+			//否则使用 ES index name 作为collection name
+			err = verifyEsIndexName(idx)
+			if err != nil {
+				return err
 			}
 		}
 
-		if len(idx.MilvusCfg.Collection) > 0 && !verifyCollNameIsOk(idx.MilvusCfg.Collection) {
-			return errors.New("[Verify ES Meta file] milvus collection name only can contain: [A-Z|a-z|0-9|_] and cannot start with number")
-		} else if !verifyCollNameIsOk(idx.Index) {
-			return errors.New("[Verify ES Meta file] Es Index Name not match [A-Z|a-z|0-9|_] format cannot as Milvus collectiono name, " +
-				"you can set milvus.collection property to replace， Index：" + idx.Index)
-		}
-
-		for _, f := range idx.FilterFields {
+		for _, f := range idx.Fields {
 			if _, ok := esconvert.SupportESTypeMap[f.Type]; !ok {
 				return errors.New("ES Meta file Index migration Field not support type: " + f.Type)
 			}
@@ -43,6 +50,28 @@ func VerifyESMetaCfg(metaJson *estype.MetaJSON) error {
 				return errors.New("ES Meta file Index migration dense_vector type Field dims need > 0")
 			}
 		}
+	}
+	return nil
+}
+
+func verifyEsIndexName(idx *estype.IdxCfg) error {
+	if !verifyCollNameIsOk(idx.Index) {
+		return errors.New("[Verify ES Meta file] Es Index Name not match [A-Z|a-z|0-9|_] format cannot as Milvus collectiono name, " +
+			"you can set milvus.collection property to replace， Index：" + idx.Index)
+	}
+	return nil
+}
+
+func verifyMilvusCollName(idx *estype.IdxCfg) error {
+	if !verifyCollNameIsOk(idx.MilvusCfg.Collection) {
+		return errors.New("[Verify ES Meta file] milvus collection name only can contain: [A-Z|a-z|0-9|_] and cannot start with number")
+	}
+	return nil
+}
+
+func verifyShardNum(idx *estype.IdxCfg) error {
+	if idx.MilvusCfg.ShardNum > common.MAX_SHARD_NUM {
+		return errors.New("[Verify ES Meta file] milvus shardNum can not > " + string(common.MAX_SHARD_NUM))
 	}
 	return nil
 }

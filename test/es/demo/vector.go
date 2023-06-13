@@ -9,9 +9,9 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/zilliztech/milvus-migration/core/transform/es/parser"
 	bizlog "github.com/zilliztech/milvus-migration/internal/log"
+	"github.com/zilliztech/milvus-migration/test/es/demo/common"
 	"go.uber.org/zap"
 	"log"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -43,7 +43,7 @@ func insertVector2(es *elasticsearch.Client, index string, size int) {
 	log.Println("Indexing the documents...")
 	for i := 1; i <= size; i++ {
 
-		val := GetInsertValue(i)
+		val := common.GetInsertValue(i)
 		bytess, _ := json.Marshal(val)
 		//body := string(bytess)
 		res, err := es.Index(
@@ -55,36 +55,6 @@ func insertVector2(es *elasticsearch.Client, index string, size int) {
 		}
 	}
 	es.Indices.Refresh(es.Indices.Refresh.WithIndex("test-vector"))
-}
-
-func GetInsertValue(i int) *InsertValue {
-	var bl bool
-	if i%2 == 0 {
-		bl = true
-	}
-	vector := make([]float32, 0, 512)
-	for i = 0; i < 512; i++ {
-		vector = append(vector, rand.Float32())
-	}
-	return &InsertValue{
-		Text1: "text1" + strconv.Itoa(i),
-		Keyw1: "keyxx" + strconv.Itoa(i),
-		Long1: rand.Int63(),
-		Int1:  rand.Int31(),
-		Bl2:   bl,
-		Doub1: rand.Float64(),
-		Dvec:  vector,
-	}
-}
-
-type InsertValue struct {
-	Text1 string    `json:"text1"`
-	Keyw1 string    `json:"keyw1"`
-	Long1 int64     `json:"long1"`
-	Int1  int32     `json:"int1"`
-	Bl2   bool      `json:"bl2"`
-	Doub1 float64   `json:"doub1"`
-	Dvec  []float32 `json:"dvec"`
 }
 
 func insertVector(es *elasticsearch.Client) {

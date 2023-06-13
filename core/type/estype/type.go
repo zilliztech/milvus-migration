@@ -6,10 +6,10 @@ type MetaJSON struct {
 }
 
 type IdxCfg struct {
-	Index        string     `json:"index"`
-	Rows         int        `json:"rows"`
-	FilterFields []FieldCfg `json:"filterFields"`
-	MilvusCfg    *MilvusCfg `json:"milvus"`
+	Index     string     `json:"index"`
+	Rows      int        `json:"rows"`
+	Fields    []FieldCfg `json:"fields"`
+	MilvusCfg *MilvusCfg `json:"milvus"`
 }
 
 type MilvusCfg struct {
@@ -19,6 +19,7 @@ type MilvusCfg struct {
 	CloseDynamicField bool   `json:"closeDynamicField"` //default value: false
 	LoadData          bool   `json:"loadData"`          //default value: false
 	CreateIndex       bool   `json:"createIndex"`       //default value: false
+	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
 }
 
 type FieldCfg struct {

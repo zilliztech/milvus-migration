@@ -92,7 +92,7 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 		},
 	})
 
-	for _, field := range idxCfg.FilterFields {
+	for _, field := range idxCfg.Fields {
 		milvusField := &entity.Field{
 			Name: field.Name,
 		}

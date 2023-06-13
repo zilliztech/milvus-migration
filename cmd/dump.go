@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zilliztech/milvus-migration/core/util"
+	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/starter"
 	"github.com/zilliztech/milvus-migration/starter/param"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -40,7 +42,7 @@ var dumpCmd = &cobra.Command{
 			},
 			jobId)
 		if err != nil {
-			fmt.Println("dump error", err)
+			log.Error("[dump error]", zap.Error(err))
 			return
 		}
 

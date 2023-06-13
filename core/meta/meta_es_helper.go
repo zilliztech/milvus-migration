@@ -52,8 +52,7 @@ func (this *MetaHelper) getESMeta(ctx context.Context) (*estype.MetaJSON, error)
 	}
 	log.Info("ES Meta Info", zap.String("version", metaJson.Version))
 	for _, IdxInfo := range metaJson.IdxCfgs {
-		log.Info("[ES Meta Static] Index", zap.String("index", IdxInfo.Index),
-			zap.Int("colRows", IdxInfo.Rows))
+		log.Info("[ES Meta Static] Index", zap.String("index", IdxInfo.Index))
 	}
 	return metaJson, err
 }

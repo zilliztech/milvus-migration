@@ -2,13 +2,15 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/elastic/go-elasticsearch/v7"
 	bizlog "github.com/zilliztech/milvus-migration/internal/log"
+	"github.com/zilliztech/milvus-migration/test/es/demo/common"
 	"go.uber.org/zap"
 	"io"
 	"log"
-	"os"
+	"strconv"
 )
 
 func main() {
@@ -16,8 +18,11 @@ func main() {
 
 	esClient := getClient8_2()
 
-	//var index2 = "test-vector3"
-	//insertVector2(esClient, index2, 10000)
+	//var index1 = "test-mul-field"
+	//insertVector8_2(esClient, index1, 1001)
+
+	var index3 = "test_mul_field3"
+	insertVector8_2(esClient, index3, 101)
 
 	Info8_2(esClient)
 }
@@ -26,7 +31,7 @@ func getClient8_2() *elasticsearch.Client {
 
 	//cert, _ := os.ReadFile("/Users/zilliz/gitCode/cloud_team/milvus-migration/files/cert_8_2/http_ca.crt")
 	//cert, _ := os.ReadFile("/Users/zilliz/gitCode/cloud_team/milvus-migration/files/10_15_9_78/http_ca.crt")
-	cert, _ := os.ReadFile("/Users/zilliz/gitCode/cloud_team/milvus-migration/files/10_15_11_224/http_ca.crt")
+	//cert, _ := os.ReadFile("/Users/zilliz/gitCode/cloud_team/milvus-migration/files/10_15_11_224/http_ca.crt")
 
 	cfg := elasticsearch.Config{
 		//Addresses: []string{"https://localhost:9200"},
@@ -41,7 +46,7 @@ func getClient8_2() *elasticsearch.Client {
 		//ServiceToken: "eyJ2ZXIiOiI4LjIuMiIsImFkciI6WyIxMC4xNS4xMS4yMjQ6OTIwMCJdLCJmZ3IiOiIyYjNhYWMyZDgwMGU0NzhkODFlMzNhMWQ4OTY4ZGM2YzcwMTA4NTk3YTQ5ODc3ZWY0MzM4ZWEzNDA2OTU3YzgyIiwia2V5IjoiNTBpd3JvZ0JhQTVjNjhndGZldWc6RV9MSnhOdUxUY3lucXd5ZGFkbE1ZUSJ9", //3.bearer token
 
 		// ca, fingerprint 二选1都支持：verifying the HTTPS connection
-		CACert: cert, //2:custom certificate authority
+		//CACert: cert, //2:custom certificate authority
 		//CACert: nil, //2:custom certificate authority
 		//CertificateFingerprint: "",
 		//CertificateFingerprint: "fabfe5c3783a06514e72448d3d041e229a6d1afaeaa98fcbbd1bd35c76242767", //
@@ -76,4 +81,23 @@ func read8_2(r io.Reader) string {
 	var b bytes.Buffer
 	b.ReadFrom(r)
 	return b.String()
+}
+
+func insertVector8_2(es *elasticsearch.Client, index string, size int) {
+
+	log.Println("Indexing the documents...")
+	for i := 1; i <= size; i++ {
+
+		val := common.GetInsertValue(i)
+		bytess, _ := json.Marshal(val)
+		//body := string(bytess)
+		res, err := es.Index(
+			index, bytes.NewReader(bytess),
+			es.Index.WithDocumentID(strconv.Itoa(i)),
+		)
+		if err != nil || res.IsError() {
+			log.Fatalf("Error: %s: %s", err, res)
+		}
+	}
+	es.Indices.Refresh(es.Indices.Refresh.WithIndex(index))
 }

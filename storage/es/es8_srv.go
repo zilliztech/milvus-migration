@@ -116,7 +116,7 @@ func (es7 *ES8ServerClient) Count(idxCfg *estype.IdxCfg) error {
 }
 
 func (es8 *ES8ServerClient) filterField(idxCfg *estype.IdxCfg) func(*esapi.SearchRequest) {
-	if idxCfg.FilterFields == nil || len(idxCfg.FilterFields) <= 0 {
+	if idxCfg.Fields == nil || len(idxCfg.Fields) <= 0 {
 		return nil
 	}
 	fields := getFieldNames(idxCfg)
