@@ -28,12 +28,13 @@ const (
 )
 
 // ES connection auth type
-const (
-	Non         = "non"
-	Cert        = "cert"
-	User        = "user"
-	FingerPrint = "fingerprint"
-)
+//const (
+//	Non         = "non"
+//User        = "user"
+//Cert        = "cert"
+//FingerPrint = "fingerprint"
+
+//)
 
 // reader type
 const (

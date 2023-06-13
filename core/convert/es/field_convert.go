@@ -71,7 +71,7 @@ func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 	}
 	param := &common.CollectionParam{
 		CollectionName: ToMilvusCollectionName(idxCfg),
-		ShardsNum:      idxCfg.ShardNum,
+		ShardsNum:      idxCfg.MilvusCfg.ShardNum,
 	}
 	return &common.CollectionInfo{Param: param, Fields: fields}, err
 }
@@ -115,8 +115,8 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 }
 
 func ToMilvusCollectionName(idx *estype.IdxCfg) string {
-	if len(idx.Alias) > 0 {
-		return idx.Alias
+	if len(idx.MilvusCfg.Collection) > 0 {
+		return idx.MilvusCfg.Collection
 	} else {
 		return idx.Index
 	}

@@ -38,11 +38,14 @@ func NewES8ServerCli(esConfig *config.ESConfig) (ESServerClient, error) {
 func _createES8Cli(esConfig *config.ESConfig) (*elasticsearch.Client, error) {
 	cert, _ := os.ReadFile(esConfig.Cert)
 	cfg := elasticsearch.Config{
-		Addresses:              esConfig.Urls,
+		Addresses:              esConfig.Urls,     //0
 		Username:               esConfig.Username, //1
 		Password:               esConfig.Password,
 		CACert:                 cert,                 //2:custom certificate authority
 		CertificateFingerprint: esConfig.FingerPrint, //3
+		CloudID:                esConfig.CloudId,     //4
+		APIKey:                 esConfig.ApiKey,
+		ServiceToken:           esConfig.ServiceToken, //5
 	}
 	esClient, err := elasticsearch.NewClient(cfg)
 	if err != nil {

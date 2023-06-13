@@ -7,10 +7,15 @@ type MetaJSON struct {
 
 type IdxCfg struct {
 	Index        string     `json:"index"`
-	Alias        string     `json:"alias"`
-	ShardNum     int        `json:"shardNum"`
 	Rows         int        `json:"rows"`
 	FilterFields []FieldCfg `json:"filterFields"`
+	MilvusCfg    MilvusCfg  `json:"milvus"`
+}
+
+type MilvusCfg struct {
+	Collection string `json:"collection"` //if empty, will use the ES index name as milvus collection
+	Dims       int    `json:"dims"`       //if Migration from es, will use ES dense_vector fields dims value
+	ShardNum   int    `json:"shardNum"`   //default value is 2
 }
 
 type FieldCfg struct {

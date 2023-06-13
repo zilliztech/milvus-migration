@@ -39,8 +39,9 @@ func GetESCli(esCfg *config.ESConfig) *es.ESClient {
 func newESCli(cfg *config.ESConfig) *es.ESClient {
 	log.Info("[ES Factory] begin to new es client",
 		zap.String("url", strings.Join(cfg.Urls, ",")),
+		zap.String("cloudId", cfg.CloudId),
 		zap.String("version", cfg.Version),
-		zap.String("Security", cfg.Security),
+		//zap.String("Security", cfg.Security),
 	)
 	esClient, err := es.CreateESClient(cfg)
 	if err != nil {

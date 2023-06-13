@@ -45,8 +45,9 @@ func (esr *ESReader) AfterPublish() error {
 func (esr *ESReader) PublishTo(w io.Writer) error {
 	defer log.Info("[ESReader] write ES success",
 		zap.String("urls", strings.Join(esr.ESSource.Cfg.Urls, ",")),
+		zap.String("cloudId", esr.ESSource.Cfg.CloudId),
 		zap.String("version", esr.ESSource.Cfg.Version),
-		zap.String("security", esr.ESSource.Cfg.Security),
+		//zap.String("security", esr.ESSource.Cfg.Security),
 	)
 	return esr.writeAll(w)
 }

@@ -34,14 +34,14 @@ func main() {
 	//Info(index, esClient)
 	//Mapping(index, esClient)
 
-	var index2 = "test-vector2"
-	insertVector2(esClient, index2)
+	var index2 = "test-vector3"
+	insertVector2(esClient, index2, 10000)
 }
 
-func insertVector2(es *elasticsearch.Client, index string) {
+func insertVector2(es *elasticsearch.Client, index string, size int) {
 
 	log.Println("Indexing the documents...")
-	for i := 1; i <= 100; i++ {
+	for i := 1; i <= size; i++ {
 
 		val := GetInsertValue(i)
 		bytess, _ := json.Marshal(val)

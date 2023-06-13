@@ -2,7 +2,6 @@ package es
 
 import (
 	"bytes"
-	"errors"
 	"github.com/tidwall/gjson"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
@@ -34,9 +33,9 @@ type ESClient struct {
 // CreateESClient : will create by factory
 func CreateESClient(esCfg *config.ESConfig) (*ESClient, error) {
 	bigVer := esCfg.Version[:1]
-	esClient := ESClient{}
-	esClient.Version = bigVer
-
+	esClient := ESClient{
+		Version: bigVer,
+	}
 	var err error
 	switch bigVer {
 	case VER7:
@@ -44,10 +43,11 @@ func CreateESClient(esCfg *config.ESConfig) (*ESClient, error) {
 	case VER8:
 		esClient.Cli, err = NewES8ServerCli(esCfg)
 	default:
-		return nil, errors.New("not support es version " + esCfg.Version)
+		log.Warn("ES version not contain, will use default sdk version", zap.String("Version", esCfg.Version))
+		esClient.Cli, err = NewES8ServerCli(esCfg)
 	}
 	if err != nil {
-		log.Error("create ES client error", zap.String("version", esCfg.Version), zap.Error(err))
+		log.Error("create ES Client error", zap.String("version", esCfg.Version), zap.Error(err))
 		return nil, err
 	}
 	return &esClient, nil

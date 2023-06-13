@@ -46,12 +46,18 @@ type MigrationConfig struct {
 }
 
 type ESConfig struct {
-	Security    string   // cert  #non, cert, password, fingerPrint,
+	//Security    string   // cert  #non, cert, password, fingerPrint,
+
+	CloudId string
+	ApiKey  string
+
 	Urls        []string //http://localhost:9200,http://localhost:9201
 	Username    string
 	Password    string
 	Cert        string // /local/certificates/ca/ca.crt
 	FingerPrint string //: "xxxxxxx...."
+
+	ServiceToken string
 
 	Version   string //internal param
 	hashCache atomic.Uint32
@@ -198,7 +204,7 @@ func InitConfigFile(configFile string) (*viper.Viper, error) {
 		log.Info("input configFile is empty, will read from dir")
 		v := viper.New()
 		v.AddConfigPath(".")
-		v.AddConfigPath("./files")
+		v.AddConfigPath("./configs")
 		v.SetConfigType("yaml")
 		v.SetConfigName("migration.yaml")
 

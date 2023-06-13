@@ -2,10 +2,12 @@ package dbclient
 
 import (
 	"context"
+	"errors"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
+	"time"
 )
 
 type CustomFieldMilvus2x struct {
@@ -88,4 +90,52 @@ func (cus *CustomFieldMilvus2x) CheckBulkLoadState(ctx context.Context, taskId i
 
 func (cus *CustomFieldMilvus2x) WaitBulkLoadSuccess(ctx context.Context, taskId int64) error {
 	return cus.Milvus2x.WaitBulkLoadSuccess(ctx, taskId)
+}
+
+func (cus *CustomFieldMilvus2x) DropCollection(ctx context.Context, collectionName string) error {
+	return cus.Milvus2x.milvus.DropCollection(ctx, collectionName)
+}
+
+func (cus *CustomFieldMilvus2x) LoadCollection(ctx context.Context, collectionName string, async bool) error {
+	err := cus.Milvus2x.milvus.LoadCollection(ctx, collectionName, async)
+	if err != nil {
+		return err
+	}
+	if async {
+		return nil
+	}
+	return err
+}
+
+func (cus *CustomFieldMilvus2x) GetLoadStatus(ctx context.Context, collectionName string) error {
+	loadStatus, err := cus.Milvus2x.milvus.GetLoadState(ctx, collectionName, nil)
+	if err != nil {
+		return err
+	}
+	if loadStatus == entity.LoadStateLoading {
+		return ProcessingErr
+	}
+	if loadStatus == entity.LoadStateLoaded {
+		return nil
+	}
+	return errors.New(string(loadStatus))
+}
+
+var ProcessingErr = errors.New(string(entity.LoadStateLoading))
+
+func (this *CustomFieldMilvus2x) CheckLoadStatus(ctx context.Context, collectionName string) error {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			err := this.GetLoadStatus(ctx, collectionName)
+			if errors.Is(err, ProcessingErr) {
+				continue
+			}
+			return err
+		}
+	}
 }
