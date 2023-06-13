@@ -21,7 +21,7 @@ func (this *MetaHelper) ReadESMeta(ctx context.Context) (*estype.MetaJSON, error
 		return nil, errors.New("read es meta index is empty")
 	}
 
-	err = check.VerifyESField(metaJson)
+	err = check.VerifyESMetaCfg(metaJson)
 	if err != nil {
 		return nil, err
 	}

@@ -9,13 +9,16 @@ type IdxCfg struct {
 	Index        string     `json:"index"`
 	Rows         int        `json:"rows"`
 	FilterFields []FieldCfg `json:"filterFields"`
-	MilvusCfg    MilvusCfg  `json:"milvus"`
+	MilvusCfg    *MilvusCfg `json:"milvus"`
 }
 
 type MilvusCfg struct {
-	Collection string `json:"collection"` //if empty, will use the ES index name as milvus collection
-	Dims       int    `json:"dims"`       //if Migration from es, will use ES dense_vector fields dims value
-	ShardNum   int    `json:"shardNum"`   //default value is 2
+	Collection        string `json:"collection"`        //if empty, will use the ES index name as milvus collection
+	Dims              int    `json:"dims"`              //if Migration from es, will use ES dense_vector fields dims value
+	ShardNum          int    `json:"shardNum"`          //default value is 2
+	CloseDynamicField bool   `json:"closeDynamicField"` //default value: false
+	LoadData          bool   `json:"loadData"`          //default value: false
+	CreateIndex       bool   `json:"createIndex"`       //default value: false
 }
 
 type FieldCfg struct {

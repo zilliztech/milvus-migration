@@ -9,11 +9,11 @@ type FileParam struct {
 }
 
 type CollectionParam struct {
-	CollectionName string
-	MetricType     string
-	Dim            int
-	ShardsNum      int
-
+	CollectionName     string
+	MetricType         string
+	Dim                int
+	ShardsNum          int
+	EnableDynamicField bool
 	// not common value
 	FileMapKey string
 }

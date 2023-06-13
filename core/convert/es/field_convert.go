@@ -70,8 +70,9 @@ func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 		return nil, err
 	}
 	param := &common.CollectionParam{
-		CollectionName: ToMilvusCollectionName(idxCfg),
-		ShardsNum:      idxCfg.MilvusCfg.ShardNum,
+		CollectionName:     ToMilvusCollectionName(idxCfg),
+		ShardsNum:          GetShardNum(idxCfg.MilvusCfg.ShardNum),
+		EnableDynamicField: !idxCfg.MilvusCfg.CloseDynamicField,
 	}
 	return &common.CollectionInfo{Param: param, Fields: fields}, err
 }
@@ -120,4 +121,12 @@ func ToMilvusCollectionName(idx *estype.IdxCfg) string {
 	} else {
 		return idx.Index
 	}
+}
+
+// GetShardNum :default shardNum set :MAX_SHARD_NUM
+func GetShardNum(shardNum int) int {
+	if shardNum <= 0 {
+		return common.MAX_SHARD_NUM
+	}
+	return shardNum
 }

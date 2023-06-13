@@ -56,7 +56,7 @@ func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collection
 		Description:        "milvus-migration",
 		AutoID:             false,
 		Fields:             collectionInfo.Fields,
-		EnableDynamicField: true,
+		EnableDynamicField: collectionInfo.Param.EnableDynamicField,
 	}
 	err := cus.Milvus2x.milvus.CreateCollection(ctx, schema, int32(collectionInfo.Param.ShardsNum))
 	if err != nil {
