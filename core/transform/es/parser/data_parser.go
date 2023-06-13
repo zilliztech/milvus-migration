@@ -1,4 +1,4 @@
-package esconvert
+package esparser
 
 import (
 	"github.com/tidwall/gjson"

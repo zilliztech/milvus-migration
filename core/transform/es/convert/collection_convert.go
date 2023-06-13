@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/core/transform/es/parser"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
@@ -66,12 +67,12 @@ func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 
 	fields, err := ToMilvusFields(idxCfg)
 	if err != nil {
-		log.Error("es convert to custom Milvus field type error", zap.Error(err))
+		log.Error("es transform to custom Milvus field type error", zap.Error(err))
 		return nil, err
 	}
 	param := &common.CollectionParam{
 		CollectionName:     ToMilvusCollectionName(idxCfg),
-		ShardsNum:          GetShardNum(idxCfg.MilvusCfg.ShardNum),
+		ShardsNum:          ToShardNum(idxCfg.MilvusCfg.ShardNum),
 		EnableDynamicField: !idxCfg.MilvusCfg.CloseDynamicField,
 	}
 	return &common.CollectionInfo{Param: param, Fields: fields}, err
@@ -82,7 +83,7 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 	var _fields []*entity.Field
 
 	_fields = append(_fields, &entity.Field{
-		Name:       MILVUS_ID,
+		Name:       esparser.MILVUS_ID,
 		DataType:   entity.FieldTypeVarChar,
 		PrimaryKey: true,
 		AutoID:     false,
@@ -123,8 +124,8 @@ func ToMilvusCollectionName(idx *estype.IdxCfg) string {
 	}
 }
 
-// GetShardNum :default shardNum set :MAX_SHARD_NUM
-func GetShardNum(shardNum int) int {
+// ToShardNum :default shardNum set :MAX_SHARD_NUM
+func ToShardNum(shardNum int) int {
 	if shardNum <= 0 {
 		return common.MAX_SHARD_NUM
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/tidwall/gjson"
-	esconvert "github.com/zilliztech/milvus-migration/core/convert/es"
+	"github.com/zilliztech/milvus-migration/core/transform/es/parser"
 	bizlog "github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"log"
@@ -121,13 +121,13 @@ func scrollVector(esClient *elasticsearch.Client) {
 	//printVector(batchNum, scrollID, hits)
 	//log.Println("IDs     ", gjson.Get(json, "hits.hits.#._id")) //#  表示数组写法？
 
-	b := esconvert.ToMilvus2Format(hits, true)
+	b := esparser.ToMilvus2Format(hits, true)
 	sb.Write(b)
 
 	// Perform the scroll requests in sequence
 	str := foreachVector(esClient, batchNum, scrollID)
 	sb.WriteString(str)
-	sb.Write(esconvert.EndCharacter())
+	sb.Write(esparser.EndCharacter())
 
 	fullStr := sb.String()
 	log.Println("json len: ", len(fullStr))
@@ -201,7 +201,7 @@ func foreachVector(esClient *elasticsearch.Client, batchNum int,
 			break
 		} else {
 			//printVector(batchNum, scrollID, hits, false)
-			b := esconvert.ToMilvus2Format(hits, false)
+			b := esparser.ToMilvus2Format(hits, false)
 			sb.Write(b)
 		}
 	}

@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"github.com/zilliztech/milvus-migration/core/check"
 	"github.com/zilliztech/milvus-migration/core/common"
-	"github.com/zilliztech/milvus-migration/core/convert"
+	"github.com/zilliztech/milvus-migration/core/transform/numpy"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"io"
@@ -175,7 +175,7 @@ func (this *BaseReader) skipKByte(num int) {
 }
 
 func (this *BaseReader) convertHead() ([]byte, error) {
-	return convert.ConvertToNumpyHead(this.head)
+	return npconvert.ConvertToNumpyHead(this.head)
 }
 
 func (this *BaseReader) SetReadSources(source ReadSource, deleteSource ReadSource) {

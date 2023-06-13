@@ -1,8 +1,8 @@
 package reader
 
 import (
-	esconvert "github.com/zilliztech/milvus-migration/core/convert/es"
 	"github.com/zilliztech/milvus-migration/core/reader/source"
+	"github.com/zilliztech/milvus-migration/core/transform/es/parser"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"io"
@@ -64,7 +64,7 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 		log.Warn("[ESReader] end to write, json data is empty")
 		return nil
 	}
-	b := esconvert.ToMilvus2Format(data.Hits, true)
+	b := esparser.ToMilvus2Format(data.Hits, true)
 	w.Write(b)
 
 	//2. foreach write next data from es source
@@ -77,10 +77,10 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 		if data.IsEmpty {
 			break
 		}
-		b = esconvert.ToMilvus2Format(data.Hits, false)
+		b = esparser.ToMilvus2Format(data.Hits, false)
 		w.Write(b)
 	}
-	w.Write(esconvert.EndCharacter())
+	w.Write(esparser.EndCharacter())
 	log.Info("[ESReader] success end to write json data")
 	return nil
 }
