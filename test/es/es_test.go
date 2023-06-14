@@ -3,27 +3,17 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/zilliztech/milvus-migration/test/es/demo/common"
 	"log"
 	"strconv"
+	"testing"
 )
 
-func main() {
-	log.SetFlags(0)
+func TestXX(t *testing.T) {
 
-	esClient := common.GetClient8_2()
-
-	//var index1 = "test-mul-field"
-	//insertVector8_2(esClient, index1, 1001)
-
-	var index3 = "test_mul_field3"
-	insertVector8_2(esClient, index3, 101)
-
-	common.Info8_2(esClient)
-}
-
-func insertVector8_2(es *elasticsearch.Client, index string, size int) {
+	es := common.GetClient8_2()
+	var index = ""
+	var size = 100
 
 	log.Println("Indexing the documents...")
 	for i := 1; i <= size; i++ {

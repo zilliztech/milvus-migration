@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/tidwall/gjson"
@@ -21,6 +22,7 @@ func main() {
 	log.SetFlags(0)
 
 	esClient := getClient()
+	fmt.Println(esClient)
 
 	//var index = "test-vector"
 
@@ -34,8 +36,8 @@ func main() {
 	//Info(index, esClient)
 	//Mapping(index, esClient)
 
-	var index2 = "test-vector3"
-	insertVector2(esClient, index2, 10000)
+	//var index2 = "test-vector3"
+	//insertVector2(esClient, index2, 10000)
 }
 
 func insertVector2(es *elasticsearch.Client, index string, size int) {
@@ -43,7 +45,7 @@ func insertVector2(es *elasticsearch.Client, index string, size int) {
 	log.Println("Indexing the documents...")
 	for i := 1; i <= size; i++ {
 
-		val := common.GetInsertValue(i)
+		val := common.GetInsertValue(i, 512)
 		bytess, _ := json.Marshal(val)
 		//body := string(bytess)
 		res, err := es.Index(

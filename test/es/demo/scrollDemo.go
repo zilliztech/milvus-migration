@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/zilliztech/milvus-migration/test/es/demo/common"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func main1() {
+func main() {
 	log.SetFlags(0)
 
 	esClient := getClient()
@@ -24,7 +25,9 @@ func main1() {
 	// Index 100 documents into the "test-scroll" index
 	//insertToIndex(esClient)
 
-	scroll(esClient)
+	//scroll(esClient)
+
+	common.Info8_2(esClient)
 
 }
 
@@ -47,7 +50,8 @@ func getClient() *elasticsearch.Client {
 	//cert, _ := os.ReadFile("/xxx/x")
 
 	cfg := elasticsearch.Config{
-		Addresses: []string{"http://localhost:9200"},
+		//Addresses: []string{"http://localhost:9200"},
+		Addresses: []string{"http://10.15.9.78:9700"},
 		//Username:  "xx", //1
 		//Password:  "xx",
 		//
