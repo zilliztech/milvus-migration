@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 	"errors"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -58,7 +59,13 @@ func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collection
 		Fields:             collectionInfo.Fields,
 		EnableDynamicField: collectionInfo.Param.EnableDynamicField,
 	}
-	err := cus.Milvus2x.milvus.CreateCollection(ctx, schema, int32(collectionInfo.Param.ShardsNum))
+	var err error
+	if collectionInfo.Param.ConsistencyLevel == nil {
+		err = cus.Milvus2x.milvus.CreateCollection(ctx, schema, int32(collectionInfo.Param.ShardsNum))
+	} else {
+		err = cus.Milvus2x.milvus.CreateCollection(ctx, schema, int32(collectionInfo.Param.ShardsNum),
+			client.WithConsistencyLevel(*collectionInfo.Param.ConsistencyLevel))
+	}
 	if err != nil {
 		log.Error("Create custom field milvus2x CreateCollection error",
 			zap.String("collection", collectionInfo.Param.CollectionName), zap.Error(err))

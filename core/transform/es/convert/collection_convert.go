@@ -63,6 +63,14 @@ var SupportESTypeMap = map[string]entity.FieldType{
 
 const VarcharMaxLen = "65535"
 
+var ConsistencyLevelMap = map[string]entity.ConsistencyLevel{
+	"Strong":     entity.ClStrong,
+	"Session":    entity.ClSession,
+	"Bounded":    entity.ClBounded,
+	"Eventually": entity.ClEventually,
+	"Customized": entity.ClCustomized,
+}
+
 func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 
 	fields, err := ToMilvusFields(idxCfg)
@@ -74,6 +82,14 @@ func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 		CollectionName:     ToMilvusCollectionName(idxCfg),
 		ShardsNum:          ToShardNum(idxCfg.MilvusCfg.ShardNum),
 		EnableDynamicField: !idxCfg.MilvusCfg.CloseDynamicField,
+	}
+	if len(idxCfg.MilvusCfg.ConsistencyLevel) > 0 {
+		val, ok := ConsistencyLevelMap[idxCfg.MilvusCfg.ConsistencyLevel]
+		if !ok {
+			log.Error("es transform to milvus consistencyLevel value invalid: " + idxCfg.MilvusCfg.ConsistencyLevel)
+			return nil, err
+		}
+		param.ConsistencyLevel = &val
 	}
 	return &common.CollectionInfo{Param: param, Fields: fields}, err
 }

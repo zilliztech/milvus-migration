@@ -44,10 +44,16 @@ func VerifyESMetaCfg(metaJson *estype.MetaJSON) error {
 
 		for _, f := range idx.Fields {
 			if _, ok := esconvert.SupportESTypeMap[f.Type]; !ok {
-				return errors.New("ES Meta file Index migration Field not support type: " + f.Type)
+				return errors.New("[Verify ES Meta file]Index migration Field not support type: " + f.Type)
 			}
 			if f.Type == string(esconvert.DenseVector) && f.Dims <= 0 {
-				return errors.New("ES Meta file Index migration dense_vector type Field dims need > 0")
+				return errors.New("[Verify ES Meta file]Index migration dense_vector type Field dims need > 0")
+			}
+		}
+		if len(idx.MilvusCfg.ConsistencyLevel) > 0 {
+			//如果存在ConsistencyLevel配置：
+			if _, ok := esconvert.ConsistencyLevelMap[idx.MilvusCfg.ConsistencyLevel]; !ok {
+				return errors.New("[Verify ES Meta file] ConsistencyLevel value invalid :" + idx.MilvusCfg.ConsistencyLevel)
 			}
 		}
 	}

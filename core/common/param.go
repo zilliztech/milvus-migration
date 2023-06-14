@@ -14,6 +14,7 @@ type CollectionParam struct {
 	Dim                int
 	ShardsNum          int
 	EnableDynamicField bool
+	ConsistencyLevel   *entity.ConsistencyLevel
 	// not common value
 	FileMapKey string
 }

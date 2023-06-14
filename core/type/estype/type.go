@@ -17,9 +17,9 @@ type MilvusCfg struct {
 	Dims              int    `json:"dims"`              //if Migration from es, will use ES dense_vector fields dims value
 	ShardNum          int    `json:"shardNum"`          //default value is 2
 	CloseDynamicField bool   `json:"closeDynamicField"` //default value: false
+	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
 	LoadData          bool   `json:"loadData"`          //default value: false
 	CreateIndex       bool   `json:"createIndex"`       //default value: false
-	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
 }
 
 type FieldCfg struct {
