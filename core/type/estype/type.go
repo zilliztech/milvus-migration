@@ -36,7 +36,8 @@ type FieldCfg struct {
 			geo-point, geo-shape
 			dense_vector
 	*/
-	Type string `json:"type"`
-	Name string `json:"name"`
-	Dims int    `json:"dims"` //dense_vector type have Dims info
+	Type   string `json:"type"`
+	Name   string `json:"name"`
+	Dims   int    `json:"dims"`   //dense_vector type have Dims info
+	MaxLen int    `json:"maxLen"` //text,keyword,string will as milvus varchar store, varchar need have the maxLen property
 }

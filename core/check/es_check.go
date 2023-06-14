@@ -49,6 +49,9 @@ func VerifyESMetaCfg(metaJson *estype.MetaJSON) error {
 			if f.Type == string(esconvert.DenseVector) && f.Dims <= 0 {
 				return errors.New("[Verify ES Meta file]Index migration dense_vector type Field dims need > 0")
 			}
+			if f.MaxLen > 0 && f.MaxLen > esconvert.VarcharMaxLenNum {
+				return errors.New("[Verify ES Meta file]milvus field max len cannot > " + esconvert.VarcharMaxLen)
+			}
 		}
 		if len(idx.MilvusCfg.ConsistencyLevel) > 0 {
 			//如果存在ConsistencyLevel配置：

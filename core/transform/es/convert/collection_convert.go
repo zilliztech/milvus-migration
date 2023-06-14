@@ -62,6 +62,7 @@ var SupportESTypeMap = map[string]entity.FieldType{
 }
 
 const VarcharMaxLen = "65535"
+const VarcharMaxLenNum = 65535
 
 var ConsistencyLevelMap = map[string]entity.ConsistencyLevel{
 	"Strong":     entity.ClStrong,
@@ -122,8 +123,12 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 		//field specify config
 		switch field.Type {
 		case string(Text), string(Keyword), string(String):
+			var maxLen = VarcharMaxLen
+			if field.MaxLen > 0 {
+				maxLen = strconv.Itoa(field.MaxLen)
+			}
 			milvusField.TypeParams = map[string]string{
-				entity.TypeParamMaxLength: VarcharMaxLen,
+				entity.TypeParamMaxLength: maxLen,
 			}
 		case string(DenseVector):
 			milvusField.TypeParams = map[string]string{entity.TypeParamDim: strconv.Itoa(field.Dims)}
