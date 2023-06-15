@@ -36,7 +36,7 @@ func (this *MetaHelper) getESMeta(ctx context.Context) (*estype.MetaJSON, error)
 	var metaJson *estype.MetaJSON
 	var err error
 	switch this.metaCfg.MetaMode {
-	case "mock":
+	case "mock", "local":
 		metaJson, err = this.getMockESMeta()
 	case "sqlite":
 		metaJson, err = NewSqliteMetaReader(this.metaCfg.LocalSqliteFile).GetESMeta(ctx)

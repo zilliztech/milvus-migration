@@ -16,6 +16,8 @@ func resolveMetaConfig(v *viper.Viper) (*MetaConfig, error) {
 	switch metaMode {
 	case "mock":
 		return resolveMetaInMock(v)
+	case "local":
+		return resolveMetaInLocal(v)
 	case "sqlite":
 		return resolveMetaInSqlite(v)
 	case "mysql":
@@ -47,6 +49,18 @@ func resolveMetaInMock(v *viper.Viper) (*MetaConfig, error) {
 
 	return &MetaConfig{
 		MetaMode:      "mock",
+		LocalMockFile: mockFile,
+	}, nil
+}
+
+func resolveMetaInLocal(v *viper.Viper) (*MetaConfig, error) {
+	mockFile := v.GetString("meta.localFile")
+	if mockFile == "" {
+		return nil, errors.New("empty [meta.localFile], pls check config")
+	}
+
+	return &MetaConfig{
+		MetaMode:      "local",
 		LocalMockFile: mockFile,
 	}, nil
 }
