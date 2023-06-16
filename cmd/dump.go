@@ -36,6 +36,12 @@ var dumpCmd = &cobra.Command{
 		jobId := util.GenerateUUID("dump")
 		fmt.Println("jodId is ", jobId)
 
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("[dump error panic]: %s\n", err.(string))
+				return
+			}
+		}()
 		err := starter.Dump(ctx, configFile,
 			&param.DumpParam{
 				Collections: collectionNameArr,
@@ -51,6 +57,7 @@ var dumpCmd = &cobra.Command{
 }
 
 func init() {
+	// ./milvus-migration dump --config=/Users/zilliz/gitCode/cloud_team/milvus-migration/configs/migration_targetMinio.yaml
 	dumpCmd.Flags().StringVarP(&dumpCollectionNames, "col", "", "", "collectionNames to dump, use ',' to connect multiple collections")
 
 	rootCmd.AddCommand(dumpCmd)

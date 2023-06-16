@@ -35,9 +35,6 @@ func getSourceESConfig(v *viper.Viper) (*ESConfig, error) {
 			//if serviceToken is empty then use user/pwd login to es, else use serviceToken.
 			username = strings.TrimSpace(v.GetString("source.es.username"))
 			password = strings.TrimSpace(v.GetString("source.es.password"))
-			if len(username) == 0 || len(password) == 0 {
-				return nil, errors.New("ES username and password cannot be empty!")
-			}
 			cert = strings.TrimSpace(v.GetString("source.es.cert"))
 			fingerprint = strings.TrimSpace(v.GetString("source.es.fingerprint"))
 		}

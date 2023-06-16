@@ -83,8 +83,14 @@ func (es7 *ES7ServerClient) InitScroll(idxCfg *estype.IdxCfg, batchSize int) (*S
 }
 
 func (es7 *ES7ServerClient) NextScroll(scrollID string) (*SearchRes, error) {
+
+	//start := time.Now()
+
 	resp, err := es7._client.Scroll(es7._client.Scroll.WithScrollID(scrollID),
 		es7._client.Scroll.WithScroll(time.Minute))
+
+	//log.Debug("[ES] NextScroll data...", zap.Float64("Cost", time.Since(start).Seconds()))
+
 	if err != nil {
 		log.Error("next scroll Error", zap.Error(err))
 		return nil, err
@@ -93,7 +99,9 @@ func (es7 *ES7ServerClient) NextScroll(scrollID string) (*SearchRes, error) {
 			zap.Int("code", resp.StatusCode), zap.String("info", resp.String()))
 		return nil, errors.New(resp.String())
 	}
-	return es7.packResult(resp)
+	res, err := es7.packResult(resp)
+	//log.Debug("[ES] NextScroll data", zap.Float64("Cost", time.Since(start).Seconds()))
+	return res, err
 }
 
 func (es7 *ES7ServerClient) Count(idxCfg *estype.IdxCfg) error {

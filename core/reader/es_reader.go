@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"strings"
+	"time"
 )
 
 // ESReader :
@@ -54,6 +55,7 @@ func (esr *ESReader) PublishTo(w io.Writer) error {
 
 func (esr *ESReader) writeAll(w io.Writer) error {
 	log.Info("[ESReader] begin to write json data...")
+	start := time.Now()
 	//1. write first from es source
 	data, err := esr.ESSource.ReadFirst()
 	if err != nil {
@@ -66,9 +68,11 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 	}
 	b := esparser.ToMilvus2Format(data.Hits, true)
 	w.Write(b)
-
+	var batch = 0
+	var printSize = 10
 	//2. foreach write next data from es source
 	for !data.IsEmpty {
+		start0 := time.Now()
 		data, err = esr.ESSource.ReadNext()
 		if err != nil {
 			log.Error("[ESReader] foreach write json data", zap.Error(err))
@@ -79,8 +83,16 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 		}
 		b = esparser.ToMilvus2Format(data.Hits, false)
 		w.Write(b)
+
+		log.Info("[ESReader] writing batch data ---->", zap.Float64("Cost", time.Since(start0).Seconds()))
+
+		if (batch % printSize) == 0 {
+			log.Info("[ESReader] writing batch data...", zap.Int("Batch", batch),
+				zap.Float64("Cost", time.Since(start).Seconds()))
+		}
+		batch++
 	}
 	w.Write(esparser.EndCharacter())
-	log.Info("[ESReader] success end to write json data")
+	log.Info("[ESReader] success end to write json data", zap.Float64("Cost", time.Since(start).Seconds()))
 	return nil
 }

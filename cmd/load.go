@@ -34,6 +34,12 @@ var loadCmd = &cobra.Command{
 		jobId := util.GenerateUUID("load")
 		fmt.Println("jodId is ", jobId)
 
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("[load error panic]: %s\n", err.(string))
+				return
+			}
+		}()
 		err := starter.Load(ctx, configFile, &param.LoadParam{
 			Collections: collectionNameArr,
 		}, jobId)
@@ -47,6 +53,7 @@ var loadCmd = &cobra.Command{
 }
 
 func init() {
+	//./milvus-migration load --config=/Users/zilliz/gitCode/cloud_team/milvus-migration/configs/migration_targetMinio.yaml
 	loadCmd.Flags().StringVarP(&loadCollectionNames, "col", "", "", "collectionNames to load, use ',' to connect multiple collections")
 
 	rootCmd.AddCommand(loadCmd)

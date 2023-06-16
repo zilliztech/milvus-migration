@@ -38,7 +38,7 @@ var testCmd = &cobra.Command{
 }
 
 func init() {
-	// options:  ./milvus-migration test --minId=3890608
+	// options:  nohup ./milvus-migration test --minId=225034301 > ./out.log &
 	testCmd.Flags().IntVarP(&min_id, "minId", "", 0, "test migration")
 	testCmd.Flags().IntVarP(&max_id, "maxId", "", 0, "test migration")
 

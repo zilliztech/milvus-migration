@@ -117,6 +117,7 @@ func (this *Milvus2x) StartBulkLoad(ctx context.Context, colName string, fullFil
 	taskId, err := this.milvus.BulkInsert(ctx, colName, "", fullFilePaths)
 
 	if err != nil {
+		log.L().Info("[Loader] BulkInsert return err", zap.Error(err))
 		return 0, err
 	}
 
