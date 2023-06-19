@@ -5,6 +5,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/tidwall/gjson"
+	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -84,12 +85,18 @@ func (es7 *ES7ServerClient) InitScroll(idxCfg *estype.IdxCfg, batchSize int) (*S
 
 func (es7 *ES7ServerClient) NextScroll(scrollID string) (*SearchRes, error) {
 
-	//start := time.Now()
+	var start time.Time
+	if common.DEBUG {
+		start = time.Now()
+	}
 
 	resp, err := es7._client.Scroll(es7._client.Scroll.WithScrollID(scrollID),
 		es7._client.Scroll.WithScroll(time.Minute))
 
-	//log.Debug("[ES] NextScroll data...", zap.Float64("Cost", time.Since(start).Seconds()))
+	if common.DEBUG {
+		log.Info("[ES] 1 NextScroll data ======>", zap.Float64("Cost", time.Since(start).Seconds()))
+		start = time.Now()
+	}
 
 	if err != nil {
 		log.Error("next scroll Error", zap.Error(err))
@@ -100,7 +107,9 @@ func (es7 *ES7ServerClient) NextScroll(scrollID string) (*SearchRes, error) {
 		return nil, errors.New(resp.String())
 	}
 	res, err := es7.packResult(resp)
-	//log.Debug("[ES] NextScroll data", zap.Float64("Cost", time.Since(start).Seconds()))
+	if common.DEBUG {
+		log.Debug("[ES] 2.NextScroll data pack to Result =====>", zap.Float64("Cost", time.Since(start).Seconds()))
+	}
 	return res, err
 }
 

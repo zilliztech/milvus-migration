@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/reader/source"
 	"github.com/zilliztech/milvus-migration/core/transform/es/parser"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -69,10 +70,9 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 	b := esparser.ToMilvus2Format(data.Hits, true)
 	w.Write(b)
 	var batch = 0
-	var printSize = 10
+	var printSize = 100
 	//2. foreach write next data from es source
 	for !data.IsEmpty {
-		start0 := time.Now()
 		data, err = esr.ESSource.ReadNext()
 		if err != nil {
 			log.Error("[ESReader] foreach write json data", zap.Error(err))
@@ -81,18 +81,25 @@ func (esr *ESReader) writeAll(w io.Writer) error {
 		if data.IsEmpty {
 			break
 		}
+
+		var start0 time.Time
+		if common.DEBUG {
+			start0 = time.Now()
+		}
 		b = esparser.ToMilvus2Format(data.Hits, false)
 		w.Write(b)
 
-		log.Info("[ESReader] writing batch data ---->", zap.Float64("Cost", time.Since(start0).Seconds()))
+		if common.DEBUG {
+			log.Info("[ESReader] 3 Es data parser to Writer ======>", zap.Float64("Cost", time.Since(start0).Seconds()))
+		}
 
 		if (batch % printSize) == 0 {
-			log.Info("[ESReader] writing batch data...", zap.Int("Batch", batch),
+			log.Info("[ESReader] 4 writing batch es data =======> ", zap.Int("Batch", batch),
 				zap.Float64("Cost", time.Since(start).Seconds()))
 		}
 		batch++
 	}
 	w.Write(esparser.EndCharacter())
-	log.Info("[ESReader] success end to write json data", zap.Float64("Cost", time.Since(start).Seconds()))
+	log.Info("[ESReader] success end to write json data=======>", zap.Float64("Cost", time.Since(start).Seconds()))
 	return nil
 }

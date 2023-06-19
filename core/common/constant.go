@@ -47,3 +47,5 @@ const (
 
 // current Milvus support max shard num is 2
 var MAX_SHARD_NUM = 2
+
+var DEBUG = true
