@@ -36,8 +36,8 @@ func main() {
 	//Info(index, esClient)
 	//Mapping(index, esClient)
 
-	//var index2 = "test-vector3"
-	//insertVector2(esClient, index2, 10000)
+	var index2 = "test-vector3"
+	insertVector2(esClient, index2, 10000)
 }
 
 func insertVector2(es *elasticsearch.Client, index string, size int) {
