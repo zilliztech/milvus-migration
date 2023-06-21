@@ -81,5 +81,5 @@ func NewAliyunClient(cfg Cfg) (*MinioClient, error) {
 		return nil, fmt.Errorf("storage: new aliyun client %w", err)
 	}
 
-	return &MinioClient{cli: cli, provider: ALIYUN}, nil
+	return &MinioClient{cli: cli, provider: ALI}, nil
 }
