@@ -231,7 +231,6 @@ func newCompleteReq(bucket, key, uploadID string, parts []types.CompletedPart) s
 	}
 }
 
-// todo:
 func (c *S3Client) uploadObject(ctx context.Context, firstBlock []byte, i UploadObjectInput) error {
 	createReq := s3.CreateMultipartUploadInput{Bucket: aws.String(i.Bucket), Key: aws.String(i.Key)}
 	createResp, err := c.cli.CreateMultipartUpload(ctx, &createReq)

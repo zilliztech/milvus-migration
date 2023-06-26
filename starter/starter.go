@@ -72,3 +72,29 @@ func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId 
 	log.LL(ctx).Info("[Cleaner] clean file success!")
 	return nil
 }
+
+func Start(ctx context.Context, configFile string, jobId string) error {
+	err := stepStore(jobId)
+	if err != nil {
+		return err
+	}
+	insCfg, err := stepConfig(configFile)
+	if err != nil {
+		return err
+	}
+
+	dump := dumper.NewDumperWithConfig(insCfg, jobId)
+	log.LL(ctx).Info("[Start] begin to do migration!")
+	err = dump.Run(ctx)
+	if err != nil {
+		return err
+	}
+
+	clean, err := cleaner.NewCleaner(insCfg, jobId)
+	err = clean.ClenFiles()
+	if err != nil {
+		return err
+	}
+	log.LL(ctx).Info("[Cleaner] clean file success!")
+	return nil
+}

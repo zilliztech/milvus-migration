@@ -33,10 +33,11 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 	gstore.SetTotalTasks(dp.jobId, len(esMetaJson.IdxCfgs))
 
 	// dump write meta.json first for load no need to read meta again
-	err = metaHelper.WriteMetaFile(ctx, esMetaJson)
-	if err != nil {
-		return err
-	}
+	//err = metaHelper.WriteMetaFile(ctx, esMetaJson)
+	//if err != nil {
+	//	return err
+	//}
+
 	//split index array to split concurrent work group
 	splitArray := util.SplitArray(esMetaJson.IdxCfgs, dp.concurLimit)
 

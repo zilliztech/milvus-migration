@@ -144,7 +144,7 @@ func (this *Milvus2xLoader) createTable(ctx context.Context) error {
 		}
 	}
 
-	log.LL(ctx).Info("[Loader] CheckMilvusState need to create collection finish, will to print")
+	log.LL(ctx).Info("[Loader] Check need to create collection finish, will to print")
 	// get all collNames
 	colNames := make([]string, 0, len(mapSet))
 	for key := range mapSet {
@@ -218,7 +218,7 @@ func (this *Milvus2xLoader) compareResult(ctx context.Context) error {
 		afterTotalCount = afterTotalCount + afterCount
 	}
 
-	log.LL(ctx).Info("[Loader] Static Total", zap.Int("Total Collections", len(this.runtimeCollectionNames)),
+	log.LL(ctx).Info("[Loader] Static Total: ", zap.Int("Total Collections", len(this.runtimeCollectionNames)),
 		zap.Int("beforeTotalCount", beforeTotalCount),
 		zap.Int("afterTotalCount", afterTotalCount),
 		zap.Int("totalIncrease", afterTotalCount-beforeTotalCount))
