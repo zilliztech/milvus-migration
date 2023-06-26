@@ -3,6 +3,7 @@ package data
 import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/atomic"
+	"sync"
 )
 
 type JobStatus string
@@ -21,7 +22,22 @@ type JobInfo struct {
 	Msg         string        `json:"msg"`
 	TotalTasks  int           `json:"totalTasks"`
 	FinishTasks *atomic.Int64 `json:"finishTasks"`
+
+	//key: collectionName/indexName, val: taskInfo,  一个task(index/Collection)可以由多个subTask来生成多个json文件
+	TaskMap map[string]*TaskInfo `json:"TaskMap"`
 }
+
+type TaskInfo struct {
+	//主要是一个collection对应的Json文件处理情况
+	//Finish        bool            `json:"Finish"`
+	Total         int             `json:"Total"`
+	TotalFinish   int             `json:"TotalFinish"`
+	NoFinishFiles map[string]bool `json:"NoFinishFiles"` //key: fileName, val: dont care
+	FinishFiles   map[string]bool `json:"FinishFiles"`   //key: fileName, val: dont care
+	FileSort      *atomic.Int32   `json:"FileSort"`
+}
+
+var lockTask = sync.RWMutex{}
 
 func NewJobInfo(jobId string) *JobInfo {
 	return &JobInfo{
@@ -29,6 +45,47 @@ func NewJobInfo(jobId string) *JobInfo {
 		JobStatus:   JobStatusInit,
 		TotalTasks:  0,
 		FinishTasks: atomic.NewInt64(0),
+		TaskMap:     make(map[string]*TaskInfo),
+	}
+}
+
+func (jobInfo *JobInfo) GetFileSort(collection string) int32 {
+	lockTask.Lock()
+	defer lockTask.Unlock()
+	val := jobInfo.TaskMap[collection]
+	if val == nil {
+		val = newSubTask()
+		jobInfo.TaskMap[collection] = val
+	}
+	return val.FileSort.Add(1)
+}
+
+func (jobInfo *JobInfo) AddFileTask(collection string, fileName string) {
+	lockTask.Lock()
+	defer lockTask.Unlock()
+	val := jobInfo.TaskMap[collection]
+	if val == nil {
+		val = newSubTask()
+		jobInfo.TaskMap[collection] = val
+	}
+	val.NoFinishFiles[fileName] = true
+	val.Total++
+}
+
+func (jobInfo *JobInfo) FinishFileTask(collection string, fileName string) {
+	lockTask.Lock()
+	defer lockTask.Unlock()
+	subTask := jobInfo.TaskMap[collection]
+	subTask.TotalFinish++
+	subTask.FinishFiles[fileName] = true
+	delete(subTask.NoFinishFiles, fileName)
+}
+
+func newSubTask() *TaskInfo {
+	return &TaskInfo{
+		FileSort:      atomic.NewInt32(0),
+		NoFinishFiles: make(map[string]bool),
+		FinishFiles:   make(map[string]bool),
 	}
 }
 

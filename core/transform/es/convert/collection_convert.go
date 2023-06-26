@@ -61,8 +61,8 @@ var SupportESTypeMap = map[string]entity.FieldType{
 	string(Object):      entity.FieldTypeJSON,
 }
 
-const VarcharMaxLen = "65535"
-const VarcharMaxLenNum = 65535
+var VarcharMaxLenNum = 65535
+var VarcharMaxLen = strconv.Itoa(VarcharMaxLenNum)
 
 var ConsistencyLevelMap = map[string]entity.ConsistencyLevel{
 	"Strong":     entity.ClStrong,
@@ -99,15 +99,9 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 
 	var _fields []*entity.Field
 
-	_fields = append(_fields, &entity.Field{
-		Name:       esparser.MILVUS_ID,
-		DataType:   entity.FieldTypeVarChar,
-		PrimaryKey: true,
-		AutoID:     false,
-		TypeParams: map[string]string{
-			entity.TypeParamMaxLength: VarcharMaxLen,
-		},
-	})
+	if idxCfg.InnerPkField == nil {
+		_fields = append(_fields, DefaultPKField())
+	}
 
 	for _, field := range idxCfg.Fields {
 		milvusField := &entity.Field{
@@ -120,6 +114,12 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 			return nil, errors.New("not support es field type " + field.Type)
 		}
 		milvusField.DataType = milvusType
+
+		if field.PK {
+			milvusField.PrimaryKey = true
+			milvusField.AutoID = false
+		}
+
 		//field specify config
 		switch field.Type {
 		case string(Text), string(Keyword), string(String):
@@ -135,6 +135,18 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 		}
 	}
 	return _fields, nil
+}
+
+func DefaultPKField() *entity.Field {
+	return &entity.Field{
+		Name:       esparser.MILVUS_ID,
+		DataType:   entity.FieldTypeVarChar,
+		PrimaryKey: true,
+		AutoID:     false,
+		TypeParams: map[string]string{
+			entity.TypeParamMaxLength: VarcharMaxLen,
+		},
+	}
 }
 
 func ToMilvusCollectionName(idx *estype.IdxCfg) string {

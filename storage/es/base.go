@@ -32,7 +32,10 @@ type ESClient struct {
 
 // CreateESClient : will create by factory
 func CreateESClient(esCfg *config.ESConfig) (*ESClient, error) {
-	bigVer := esCfg.Version[:1]
+	bigVer := VER7 //default
+	if len(esCfg.Version) > 0 {
+		bigVer = esCfg.Version[:1]
+	}
 	esClient := ESClient{
 		Version: bigVer,
 	}

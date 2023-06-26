@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/zilliztech/milvus-migration/core/type/milvustype"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -52,10 +53,18 @@ func GenerateFaissDataFilePath(outputDir string, colName string) (string, string
 	return targetDir, fileName
 }
 
-func GenerateESDataFilePath(outputDir string, index string) (string, string) {
-	targetDir := filepath.Join(outputDir, index)
-	fileName := filepath.Join(targetDir, "data.json")
-	return targetDir, fileName
+func GenerateESDataFilePath(outputDir string, indexName string) string {
+	targetDir := filepath.Join(outputDir, indexName)
+	return targetDir
+	//fileName := filepath.Join(targetDir, "data.json")
+	//return targetDir, fileName
+}
+
+func GenerateESDataSubFileName(targetDir string, subTaskNum int, sort int) string {
+	//data_1_1.json, data_1_2.json , data_2_3.json, data_2_4.json
+	fileNmae := strings.Join([]string{"data", strconv.Itoa(subTaskNum), strconv.Itoa(sort)}, "_")
+	fileNmae = strings.Join([]string{fileNmae, "json"}, ".")
+	return filepath.Join(targetDir, fileNmae)
 }
 
 func GetAddressAndPortFromEndpoint(endpoint string) (string, string, error) {

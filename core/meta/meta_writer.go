@@ -52,12 +52,11 @@ func (this *MetaHelper) writeMetaFileToRemote(ctx context.Context, metaJson any)
 	outputDir, fileFullName := util.GetOutputMetaJsonFilePath(this.cfg.TargetOutputDir)
 	log.LL(ctx).Info("[Meta Helper] begin to write meta.json to remote", zap.String("fileName", fileFullName))
 
-	fileWriter := writer.NewRemoteWriter(this.cfg.TargetRemote,
-		&common.FileParam{
-			FileDir:      outputDir,
-			FileFullName: path.Join(outputDir, "meta.json"),
-			BucketName:   this.cfg.TargetRemote.BucketName,
-		})
+	fileWriter := writer.NewRemoteWriter(this.cfg.TargetRemote, &common.FileParam{
+		FileDir:      outputDir,
+		FileFullName: path.Join(outputDir, "meta.json"),
+		BucketName:   this.cfg.TargetRemote.BucketName,
+	})
 
 	jsonByte, err := json.Marshal(metaJson)
 	if err != nil {

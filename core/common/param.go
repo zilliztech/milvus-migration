@@ -8,6 +8,12 @@ type FileParam struct {
 	BucketName   string
 }
 
+type SortParam struct {
+	sort   int
+	number int
+	name   string
+}
+
 type CollectionParam struct {
 	CollectionName     string
 	MetricType         string

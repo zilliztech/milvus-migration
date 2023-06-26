@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
-	// Check response status
+	// CheckMilvusState response status
 	if res.IsError() {
 		log.Fatalf("Error: %s", res.String())
 	}

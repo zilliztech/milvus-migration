@@ -53,3 +53,16 @@ func AddFinishTasks(jobId string, increment int) {
 	jobInfo := mustGetJobInfo(jobId)
 	jobInfo.AddFinishTasks(increment)
 }
+
+func GetFileSort(jobId string, collection string) int32 {
+	jobInfo := mustGetJobInfo(jobId)
+	return jobInfo.GetFileSort(collection)
+}
+func AddFileTask(jobId string, collection string, fileName string) {
+	jobInfo := mustGetJobInfo(jobId)
+	jobInfo.AddFileTask(collection, fileName)
+}
+func FinishFileTask(jobId string, collection string, fileName string) {
+	jobInfo := mustGetJobInfo(jobId)
+	jobInfo.FinishFileTask(collection, fileName)
+}

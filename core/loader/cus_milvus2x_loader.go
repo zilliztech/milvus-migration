@@ -2,53 +2,79 @@ package loader
 
 import (
 	"context"
+	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/dbclient"
-	"github.com/zilliztech/milvus-migration/core/util"
+	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/internal/util/retry"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 	"time"
 )
 
 // CusFieldMilvus2xLoader : user custom fields loader
 type CusFieldMilvus2xLoader struct {
-	Loader      *Milvus2xLoader
 	CusMilvus2x *dbclient.CustomFieldMilvus2x
+	concurLimit int
+	workMode    string
+	cfg         *config.MigrationConfig
+	//jobId       string
+
+	runtimeCollectionRows  map[string]int
+	runtimeCollectionNames []string
+
+	//custom fields collection info
+	runtimeCusCollectionInfos []*common.CollectionInfo
 }
 
-func NewCusFieldMilvus2xLoader(loader *Milvus2xLoader) *CusFieldMilvus2xLoader {
+func NewCusFieldMilvus2xLoader(cfg *config.MigrationConfig) (*CusFieldMilvus2xLoader, error) {
+	client, err := dbclient.NewMilvus2xClient(cfg.Milvus2xCfg)
+	if err != nil {
+		return nil, err
+	}
 	return &CusFieldMilvus2xLoader{
-		Loader:      loader,
-		CusMilvus2x: dbclient.NewCusFieldMilvus2xClient(loader.milvus),
-	}
+		CusMilvus2x: dbclient.NewCusFieldMilvus2xClient(client),
+		cfg:         cfg,
+		//jobId:       jobId,
+		concurLimit: cfg.LoaderWorkLimit,
+		workMode:    cfg.LoaderWorkCfg.WorkMode,
+	}, nil
 }
 
-// load All
-func (cus *CusFieldMilvus2xLoader) loadAll(ctx context.Context) error {
-
-	err := cus.createTable(ctx)
+func (this *CusFieldMilvus2xLoader) Before(ctx context.Context, idxCfgs []*estype.IdxCfg) error {
+	err := this.setMilvusInfo(idxCfgs)
 	if err != nil {
 		return err
 	}
-
-	err2 := cus.beforeStatistics(ctx)
-	if err2 != nil {
-		return err2
-	}
-
-	err = cus.loadData(ctx)
+	err = this.createTable(ctx)
 	if err != nil {
 		return err
 	}
+	return this.beforeStatistics(ctx)
+}
 
-	return cus.afterCompareResult(ctx)
+func (this *CusFieldMilvus2xLoader) Write2Milvus(ctx context.Context, fileName string, collection string) (int64, error) {
+
+	log.LL(ctx).Info("[Loader] Begin to load json file to milvus",
+		zap.String("collection", collection), zap.String("fileName", fileName))
+
+	return this.CusMilvus2x.StartBulkLoad(ctx, collection, []string{fileName})
+}
+
+func (cus *CusFieldMilvus2xLoader) CheckMilvusState(ctx context.Context, taskId int64) error {
+	//InBulkLoadProcess = errors.New("InBulkLoadProcess")
+	//BulkLoadFailed    = errors.New("BulkLoadFailed")
+	return cus.CusMilvus2x.CheckBulkLoadState(ctx, taskId)
+}
+
+func (cus *CusFieldMilvus2xLoader) After(ctx context.Context) error {
+	return cus.compareResult(ctx)
 }
 
 func (cus *CusFieldMilvus2xLoader) createTable(ctx context.Context) error {
 
 	log.LL(ctx).Info("[Loader] All collection Begin to create...")
-	for _, collectionInfo := range cus.Loader.runtimeCusCollectionInfos {
+	for _, collectionInfo := range cus.runtimeCusCollectionInfos {
 		err := retry.Do(ctx, func() error {
 			return cus.CusMilvus2x.CreateCollection(ctx, collectionInfo)
 		}, retry.Attempts(5), retry.Sleep(2*time.Second))
@@ -63,51 +89,38 @@ func (cus *CusFieldMilvus2xLoader) createTable(ctx context.Context) error {
 
 func (cus *CusFieldMilvus2xLoader) beforeStatistics(ctx context.Context) error {
 	log.LL(ctx).Info("[Loader] collection load data before statistics...")
-	colRowsMap, err := cus.CusMilvus2x.ShowCollectionRows(ctx, cus.Loader.runtimeCollectionNames, true)
+	colRowsMap, err := cus.CusMilvus2x.ShowCollectionRows(ctx, cus.runtimeCollectionNames, true)
 	if err != nil {
 		return err
 	}
-	cus.Loader.runtimeCollectionRows = colRowsMap
+	cus.runtimeCollectionRows = colRowsMap
 	return nil
 }
 
-func (cus *CusFieldMilvus2xLoader) loadData(ctx context.Context) error {
-	splitArray := util.SplitArray(cus.Loader.runtimeCollectionNames, cus.Loader.concurLimit)
-	for _, arr := range splitArray {
-		err := cus.loadDataBatch(ctx, arr)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+func (this *CusFieldMilvus2xLoader) compareResult(ctx context.Context) error {
+	rowsMap, err := this.CusMilvus2x.ShowCollectionRows(ctx, this.runtimeCollectionNames, false)
 
-func (cus *CusFieldMilvus2xLoader) loadDataBatch(ctx context.Context, collections []string) error {
-	g, subCtx := errgroup.WithContext(ctx)
-	for _, col := range collections {
-		finalCol := col
-		g.Go(func() error {
-			return cus.LoadDataOne(subCtx, finalCol)
-		})
-	}
-	return g.Wait()
-}
-
-func (cus *CusFieldMilvus2xLoader) LoadDataOne(ctx context.Context, collection string) error {
-
-	log.LL(ctx).Info("[Loader] Begin to load runtimeFiles to milvus", zap.String("fileKey", collection))
-
-	files, _ := cus.Loader.runtimeFiles.Get(collection)
-
-	taskId, err := cus.CusMilvus2x.StartBulkLoad(ctx, collection, files)
+	beforeTotalCount := 0
+	afterTotalCount := 0
 	if err != nil {
 		return err
 	}
-	return cus.CusMilvus2x.WaitBulkLoadSuccess(ctx, taskId)
-}
+	for _, val := range this.runtimeCollectionNames {
+		beforeCount := this.runtimeCollectionRows[val]
+		afterCount := rowsMap[val]
+		log.LL(ctx).Info("[Loader] Static: ", zap.String("collection", val),
+			zap.Int("beforeCount", beforeCount),
+			zap.Int("afterCount", afterCount),
+			zap.Int("increase", afterCount-beforeCount))
 
-func (cus *CusFieldMilvus2xLoader) afterCompareResult(ctx context.Context) error {
+		beforeTotalCount = beforeTotalCount + beforeCount
+		afterTotalCount = afterTotalCount + afterCount
+	}
 
-	return cus.Loader.compareResult(ctx)
+	log.LL(ctx).Info("[Loader] Static Total", zap.Int("Total Collections", len(this.runtimeCollectionNames)),
+		zap.Int("beforeTotalCount", beforeTotalCount),
+		zap.Int("afterTotalCount", afterTotalCount),
+		zap.Int("totalIncrease", afterTotalCount-beforeTotalCount))
 
+	return nil
 }

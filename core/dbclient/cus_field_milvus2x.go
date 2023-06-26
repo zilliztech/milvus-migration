@@ -91,7 +91,6 @@ func (cus *CustomFieldMilvus2x) GetCollectionRowCount(ctx context.Context, colNa
 }
 
 func (cus *CustomFieldMilvus2x) CheckBulkLoadState(ctx context.Context, taskId int64) error {
-
 	return cus.Milvus2x.CheckBulkLoadState(ctx, taskId)
 }
 

@@ -5,7 +5,9 @@ import (
 )
 
 func main() {
-	max_id := 100 * 100 * 100 * 100 * 10 //10亿
-	min_id := 2822684 + 1
-	common.BulkInsert(min_id, max_id)
+	//max_id := 100 * 100 * 100 * 100 * 10 //10亿
+	max_id := 1000
+	min_id := 1
+	indexName := "test_mul_field4"
+	common.BulkInsert(min_id, max_id, indexName)
 }

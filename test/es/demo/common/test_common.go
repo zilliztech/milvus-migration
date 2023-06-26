@@ -103,8 +103,7 @@ func Info8_2(client *elasticsearch.Client) error {
 	return err
 }
 
-func BulkInsert(min_id int, max_id int) {
-	indexName := "test_mul_field2"
+func BulkInsert(min_id int, max_id int, indexName string) {
 	// 创建client
 	//client, err := elastic.NewClient(elastic.SetURL("localhost:9200"))
 	//client, err := elastic.NewClient(elastic.SetURL("http://10.15.9.78:9700"), elastic.SetSniff(false))

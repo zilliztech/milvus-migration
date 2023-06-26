@@ -33,21 +33,21 @@ func (this *FaissDataReader) readHead() error {
 	return nil
 }
 
-func (this *FaissDataReader) PublishTo(w io.Writer) error {
+func (this *FaissDataReader) PublishTo(w io.Writer) (error, *PublishResponse) {
 	defer log.Info("[FaissDataReader] write faiss-data file success", zap.String("file", this.FileFullName()))
 
 	err := this.readHead()
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	// write head
 	err = this.pushHeadTo(w)
 	if err != nil {
-		return err
+		return err, nil
 	}
 
-	return this.pushDataList(w)
+	return this.pushDataList(w), nil
 }
 
 // write data list

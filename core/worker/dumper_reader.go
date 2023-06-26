@@ -10,10 +10,10 @@ import (
 )
 
 // create worker reader
-func newReader(cfg *config.ReadConfig) (reader.Publisher, error) {
+func newReader(cfg *config.ReadConfig, channel *source.ChannelSource) (reader.Publisher, error) {
 	switch cfg.ReaderType {
 	case common.ES:
-		return newESReader(cfg)
+		return newESReader(channel.ESSource)
 	case common.RV:
 		return newRVReader(cfg)
 	case common.UID:
@@ -48,9 +48,9 @@ func newFaissDataReader(cfg *config.ReadConfig) (reader.Publisher, error) {
 	return idReader, nil
 }
 
-func newESReader(cfg *config.ReadConfig) (reader.Publisher, error) {
-	esReadSource := source.NewESSource(cfg) //this method if error will panic
-	esReader := reader.NewESReader(esReadSource, cfg.BufSize)
+func newESReader(esSource *source.ESSource) (reader.Publisher, error) {
+	//esReadSource := source.NewESSource(cfg) //this method if error will panic
+	esReader := reader.NewESReader(esSource)
 	return esReader, nil
 }
 

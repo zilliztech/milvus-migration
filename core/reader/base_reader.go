@@ -16,9 +16,13 @@ const defaultKBSize = 1024
 
 const oneKB = 1024
 
+type PublishResponse struct {
+	NoData     bool //本次生成文件是否有数据
+	RemainData bool //还有剩余数据没读取完
+}
 type Publisher interface {
 	BeforePublish() error
-	PublishTo(w io.Writer) error
+	PublishTo(w io.Writer) (error, *PublishResponse)
 	AfterPublish() error
 }
 

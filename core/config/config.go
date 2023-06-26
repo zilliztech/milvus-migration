@@ -3,7 +3,6 @@ package config
 import (
 	"github.com/spf13/viper"
 	"github.com/zilliztech/milvus-migration/core/common"
-	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"hash/fnv"
@@ -123,8 +122,9 @@ type ReadConfig struct {
 	DeleteFile *common.FileParam
 
 	//read data from es connection config
-	ESConfig *ESConfig
-	ESIdxCfg *estype.IdxCfg
+	//ESConfig *ESConfig
+	//ESIdxCfg *estype.IdxCfg
+	//ESSource *source.ESSource
 }
 
 type WriteConfig struct {

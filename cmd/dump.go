@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/util"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/starter"
@@ -51,8 +53,10 @@ var dumpCmd = &cobra.Command{
 			log.Error("[dump error]", zap.Error(err))
 			return
 		}
-
 		fmt.Printf("Dump Success! Job %s cost=[%f]\n", jobId, time.Since(start).Seconds())
+		jobInfo, _ := gstore.GetJobInfo(jobId)
+		val, _ := json.Marshal(&jobInfo)
+		fmt.Printf("Dump JobInfo! %s", string(val))
 	},
 }
 

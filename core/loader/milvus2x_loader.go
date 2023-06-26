@@ -77,12 +77,13 @@ func (this *Milvus2xLoader) doDump(ctx context.Context) error {
 	this.setTotalTasks()
 
 	// load all
-	if common.DumpMode(this.workMode) == common.Elasticsearch {
-		//if es mode go to the new MultiField loader
-		return NewCusFieldMilvus2xLoader(this).loadAll(ctx)
-	} else {
-		return this.loadAll(ctx)
-	}
+	return this.loadAll(ctx)
+	//if common.DumpMode(this.workMode) == common.Elasticsearch {
+	//	//if es mode go to the new MultiField loader
+	//	return NewCusFieldMilvus2xLoader(this).loadAll(ctx)
+	//} else {
+	//	return this.loadAll(ctx)
+	//}
 }
 
 func (this *Milvus2xLoader) setTotalTasks() {
@@ -95,8 +96,8 @@ func (this *Milvus2xLoader) setTotalTasks() {
 
 func (this *Milvus2xLoader) loadRuntimeMetaByWorkMode(ctx context.Context) error {
 	switch common.DumpMode(this.workMode) {
-	case common.Elasticsearch:
-		return this.loadRuntimeMetaInESMode(ctx)
+	//case common.Elasticsearch:
+	//return this.loadRuntimeMetaInESMode(ctx)
 	case common.Milvus1x:
 		return this.loadRuntimeMetaInMilvus1xMode(ctx)
 	case common.Faiss:
@@ -143,7 +144,7 @@ func (this *Milvus2xLoader) createTable(ctx context.Context) error {
 		}
 	}
 
-	log.LL(ctx).Info("[Loader] Check need to create collection finish, will to print")
+	log.LL(ctx).Info("[Loader] CheckMilvusState need to create collection finish, will to print")
 	// get all collNames
 	colNames := make([]string, 0, len(mapSet))
 	for key := range mapSet {

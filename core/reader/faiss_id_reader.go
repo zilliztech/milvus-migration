@@ -34,21 +34,21 @@ func (this *FaissIdReader) AfterPublish() error {
 	return this.closeFileSource()
 }
 
-func (this *FaissIdReader) PublishTo(w io.Writer) error {
+func (this *FaissIdReader) PublishTo(w io.Writer) (error, *PublishResponse) {
 	defer log.Info("[FaissIdReader] write faiss-id file success", zap.String("file", this.FileFullName()))
 
 	err := this.readHead()
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	// write head
 	err = this.pushHeadTo(w)
 	if err != nil {
-		return err
+		return err, nil
 	}
 
-	return this.pushIdList(w)
+	return this.pushIdList(w), nil
 }
 
 func (this *FaissIdReader) pushHeadTo(w io.Writer) error {

@@ -31,7 +31,8 @@ var testCmd = &cobra.Command{
 			max_id = 100 * 100 * 100 * 100 * 10 //10亿
 		}
 		fmt.Printf("Will Do MaxId : %d, MinId : %d", max_id, min_id)
-		common.BulkInsert(min_id, max_id)
+		indexName := "test_mul_field4"
+		common.BulkInsert(min_id, max_id, indexName)
 
 		fmt.Printf("Test Success!", time.Since(start).Seconds())
 	},

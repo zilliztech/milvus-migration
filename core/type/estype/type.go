@@ -1,5 +1,7 @@
 package estype
 
+import "github.com/milvus-io/milvus-sdk-go/v2/entity"
+
 type MetaJSON struct {
 	IdxCfgs []*IdxCfg `json:"indexs"`
 	Version string    `json:"version"`
@@ -10,6 +12,10 @@ type IdxCfg struct {
 	Rows      int        `json:"rows"`
 	Fields    []FieldCfg `json:"fields"`
 	MilvusCfg *MilvusCfg `json:"milvus"`
+
+	InnerPkField *FieldCfg
+	InnerPkType  *entity.FieldType
+	//InnerHasPK   bool
 }
 
 type MilvusCfg struct {
@@ -40,4 +46,5 @@ type FieldCfg struct {
 	Name   string `json:"name"`
 	Dims   int    `json:"dims"`   //dense_vector type have Dims info
 	MaxLen int    `json:"maxLen"` //text,keyword,string will as milvus varchar store, varchar need have the maxLen property
+	PK     bool   `json:"pk"`
 }

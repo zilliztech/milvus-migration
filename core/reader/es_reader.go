@@ -15,13 +15,15 @@ import (
 type ESReader struct {
 	//not read from file(local, remote), is from ES server, so don't use BaseReader params.
 	//Cfg   *config.ESConfig
-	BufSize  int
+	//BufSize  int
 	ESSource *source.ESSource
 }
 
-func NewESReader(esSource *source.ESSource, bufSize int) *ESReader {
+const PrintSize = 100
+
+func NewESReader(esSource *source.ESSource) *ESReader {
 	esr := ESReader{
-		BufSize:  bufSize,
+		//BufSize:  bufSize,
 		ESSource: esSource,
 	}
 	return &esr
@@ -41,10 +43,12 @@ func (esr *ESReader) AfterPublish() error {
 		in others file/s3 Reader here need to close file/s3 io.reader
 		here in es reader we need close the es scroll
 	*/
-	return esr.ESSource.Close()
+	// cannot close, because import the subtask to split big index json file, will close by ESSource self. by: 2023/06/19
+	//return esr.ESSource.Close()
+	return nil
 }
 
-func (esr *ESReader) PublishTo(w io.Writer) error {
+func (esr *ESReader) PublishTo(w io.Writer) (error, *PublishResponse) {
 	defer log.Info("[ESReader] write ES success",
 		zap.String("urls", strings.Join(esr.ESSource.Cfg.Urls, ",")),
 		zap.String("cloudId", esr.ESSource.Cfg.CloudId),
@@ -54,52 +58,50 @@ func (esr *ESReader) PublishTo(w io.Writer) error {
 	return esr.writeAll(w)
 }
 
-func (esr *ESReader) writeAll(w io.Writer) error {
+func (esr *ESReader) writeAll(writer io.Writer) (error, *PublishResponse) {
 	log.Info("[ESReader] begin to write json data...")
 	start := time.Now()
-	//1. write first from es source
-	data, err := esr.ESSource.ReadFirst()
-	if err != nil {
-		log.Error("[ESReader] write json data", zap.Error(err))
-		return err
-	}
-	if data.IsEmpty {
-		log.Warn("[ESReader] end to write, json data is empty")
-		return nil
-	}
-	b := esparser.ToMilvus2Format(data.Hits, true)
-	w.Write(b)
-	var batch = 0
-	var printSize = 100
-	//2. foreach write next data from es source
-	for !data.IsEmpty {
-		data, err = esr.ESSource.ReadNext()
-		if err != nil {
-			log.Error("[ESReader] foreach write json data", zap.Error(err))
-			return err
-		}
+
+	fileSize := 0       //当前写入json文件的大小
+	var batch = 0       //循环获取数据的次数，debug模式下查看运行速度
+	remainData := false // 是否还需要生成新的小json文件
+	noData := true      //是否是首次获取数据
+
+	for data := range esr.ESSource.DataChannel {
 		if data.IsEmpty {
 			break
 		}
-
-		var start0 time.Time
+		var startParseDataTime time.Time
 		if common.DEBUG {
-			start0 = time.Now()
+			startParseDataTime = time.Now()
 		}
-		b = esparser.ToMilvus2Format(data.Hits, false)
-		w.Write(b)
+		var b []byte
+		if noData {
+			b = esparser.First2JsonData(&data.Hits, esr.ESSource.IdxCfg)
+			noData = false
+		} else {
+			b = esparser.Next2JsonData(&data.Hits, esr.ESSource.IdxCfg)
+		}
+		writer.Write(b)
+		fileSize += len(b)
 
+		if fileSize >= common.SUB_FILE_SIZE {
+			remainData = true
+			log.Info("[ESReader] Es data reach total size > Max json file size, will create new json file", zap.Int("fileSize", fileSize))
+			break
+		}
 		if common.DEBUG {
-			log.Info("[ESReader] 3 Es data parser to Writer ======>", zap.Float64("Cost", time.Since(start0).Seconds()))
+			log.Info("[ESReader] 3 Es data parser to Writer ======>", zap.Float64("Cost", time.Since(startParseDataTime).Seconds()))
+			if (batch % PrintSize) == 0 {
+				log.Info("[ESReader] 4 writing batch es data =======> ", zap.Int("Batch", batch),
+					zap.Float64("Cost", time.Since(start).Seconds()))
+			}
+			batch++
 		}
-
-		if (batch % printSize) == 0 {
-			log.Info("[ESReader] 4 writing batch es data =======> ", zap.Int("Batch", batch),
-				zap.Float64("Cost", time.Since(start).Seconds()))
-		}
-		batch++
 	}
-	w.Write(esparser.EndCharacter())
+	if !noData {
+		writer.Write(esparser.EndCharacter())
+	}
 	log.Info("[ESReader] success end to write json data=======>", zap.Float64("Cost", time.Since(start).Seconds()))
-	return nil
+	return nil, &PublishResponse{RemainData: remainData, NoData: noData}
 }

@@ -2,6 +2,7 @@ package check
 
 import (
 	"errors"
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/transform/es/convert"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
@@ -42,8 +43,10 @@ func VerifyESMetaCfg(metaJson *estype.MetaJSON) error {
 			}
 		}
 
-		for _, f := range idx.Fields {
-			if _, ok := esconvert.SupportESTypeMap[f.Type]; !ok {
+		for i, f := range idx.Fields {
+			var milvusType entity.FieldType
+			var ok bool
+			if milvusType, ok = esconvert.SupportESTypeMap[f.Type]; !ok {
 				return errors.New("[Verify ES Meta file]Index migration Field not support type: " + f.Type)
 			}
 			if f.Type == string(esconvert.DenseVector) && f.Dims <= 0 {
@@ -51,6 +54,13 @@ func VerifyESMetaCfg(metaJson *estype.MetaJSON) error {
 			}
 			if f.MaxLen > 0 && f.MaxLen > esconvert.VarcharMaxLenNum {
 				return errors.New("[Verify ES Meta file]milvus field max len cannot > " + esconvert.VarcharMaxLen)
+			}
+			if f.PK {
+				if idx.InnerPkField != nil {
+					return errors.New("[Verify ES Meta file]milvus pk field more than one ")
+				}
+				idx.InnerPkField = &idx.Fields[i]
+				idx.InnerPkType = &milvusType
 			}
 		}
 		if len(idx.MilvusCfg.ConsistencyLevel) > 0 {

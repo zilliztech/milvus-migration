@@ -12,6 +12,8 @@ const (
 
 type Receiver interface {
 	Execute(ctx context.Context, r io.Reader) error
+	//ExecBufStrategy() bool
+	//ExecuteBuf(ctx context.Context, r *bufio.Reader) error
 }
 
 type BaseWriter struct {
