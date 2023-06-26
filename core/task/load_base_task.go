@@ -4,84 +4,80 @@ import (
 	"context"
 	"errors"
 	"github.com/zilliztech/milvus-migration/core/common"
-	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/dbclient"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/loader"
-	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"time"
 )
 
-func NewESTaskLoader(cfg *config.MigrationConfig, jobId string) (*TaskLoader, error) {
-	cusFieldLoader, err := loader.NewCusFieldMilvus2xLoader(cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &TaskLoader{
+type BaseLoadTasker struct {
+	DataChannel      chan *FileInfo
+	CheckChannel     chan *FileInfo
+	CusFieldLoader   *loader.CustomMilvus2xLoader
+	JobId            string
+	ProcessTaskCount *atomic.Int32
+}
+
+func NewBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, jobId string) *BaseLoadTasker {
+	loadTasker := &BaseLoadTasker{
 		DataChannel:      make(chan *FileInfo, 100),
 		CheckChannel:     make(chan *FileInfo, 100),
 		CusFieldLoader:   cusFieldLoader,
 		JobId:            jobId,
 		ProcessTaskCount: atomic.NewInt32(0),
-	}, nil
+	}
+	return loadTasker
 }
 
-func (tasker TaskLoader) Close() {
+func (tasker BaseLoadTasker) CloseDataChannel() {
 	close(tasker.DataChannel)
 }
-
-// Commit : commit a data file to TaskLoader chan for wait to write to milvus2.x
-func (tasker TaskLoader) Commit(fileName string, collection string) {
-	tasker.DataChannel <- &FileInfo{fn: fileName, cn: collection}
+func (tasker BaseLoadTasker) CloseCheckChannel() {
+	close(tasker.CheckChannel)
 }
 
-// Start : start write data to milvus2.x
-func (tasker TaskLoader) Start(ctx context.Context, idxCfgs []*estype.IdxCfg) error {
+func (tasker BaseLoadTasker) GetDataChannel() chan *FileInfo {
+	return tasker.DataChannel
+}
 
-	defer close(tasker.CheckChannel)
+// Commit : commit a data file to BaseLoadTasker chan for wait to write to milvus2.x
+func (tasker BaseLoadTasker) CommitData(fileInfo *FileInfo) {
+	tasker.DataChannel <- fileInfo
+}
 
-	err := tasker.CusFieldLoader.Before(ctx, idxCfgs)
-	if err != nil {
-		return err
-	}
-	for task := range tasker.DataChannel {
-		err := tasker.LoopCheckBacklog()
-		if err != nil {
-			return err
-		}
-		taskId, err := tasker.CusFieldLoader.Write2Milvus(ctx, task.fn, task.cn)
-		if err != nil {
-			return err
-		}
+func (tasker BaseLoadTasker) CommitCheck(task *FileInfo, taskId int64) {
+	task.taskId = taskId
+	tasker.CheckChannel <- task
+}
 
-		count := tasker.ProcessTaskCount.Inc()
-		log.Info("[LoadESTasker] Processing Task -------------->", zap.Int32("Count", count),
-			zap.String("fileName", task.fn), zap.Int64("taskId", taskId))
+func (tasker BaseLoadTasker) incTaskCount(task *FileInfo, taskId int64) {
+	count := tasker.ProcessTaskCount.Inc()
+	log.Info("[LoadTasker] Inc Task Processing-------------->", zap.Int32("Count", count),
+		zap.String("fileName", task.fn), zap.Int64("taskId", taskId))
+}
 
-		task.taskId = taskId
-		tasker.CheckChannel <- task
-	}
-	return nil
+func (tasker BaseLoadTasker) GetMilvusLoader() *loader.CustomMilvus2xLoader {
+	return tasker.CusFieldLoader
 }
 
 // Check : check task progress
-func (tasker TaskLoader) Check(ctx context.Context) error {
+func (tasker BaseLoadTasker) Check(ctx context.Context) error {
 	for task := range tasker.CheckChannel {
 		stateErr := tasker.LoopCheckStateUntilSuc(ctx, task)
 		if stateErr != nil {
 			return stateErr
 		}
-		log.Info("[LoadESTasker] Check Task --------------->",
+		log.Info("[LoadTasker] Progress Task --------------->",
 			zap.String("fileName", task.fn), zap.Int64("taskId", task.taskId))
 	}
 	tasker.CusFieldLoader.After(ctx)
 	return nil
 }
 
-func (tasker TaskLoader) LoopCheckStateUntilSuc(ctx context.Context, task *FileInfo) error {
+func (tasker BaseLoadTasker) LoopCheckStateUntilSuc(ctx context.Context, task *FileInfo) error {
 	stateErr := tasker.CusFieldLoader.CheckMilvusState(ctx, task.taskId)
 	for errors.Is(stateErr, dbclient.InBulkLoadProcess) {
 		time.Sleep(common.LOAD_CHECK_BULK_STATE_INTERVAL)
@@ -89,12 +85,14 @@ func (tasker TaskLoader) LoopCheckStateUntilSuc(ctx context.Context, task *FileI
 	}
 	if stateErr == nil {
 		gstore.FinishFileTask(tasker.JobId, task.cn, task.fn) //finish
-		tasker.ProcessTaskCount.Dec()
+		count := tasker.ProcessTaskCount.Dec()
+		log.Info("[LoadTasker] Dec Task Processing-------------->", zap.Int32("Count", count),
+			zap.String("fileName", task.fn), zap.Int64("taskId", task.taskId))
 		return nil
 	}
 	return stateErr
 }
-func (tasker TaskLoader) LoopCheckBacklog() error {
+func (tasker BaseLoadTasker) LoopCheckBacklog() error {
 	count := tasker.ProcessTaskCount.Load()
 	for count > 20 {
 		time.Sleep(common.LOAD_CHECK_BACKLOG_INTERVAL)
@@ -118,7 +116,7 @@ func (tasker TaskLoader) LoopCheckBacklog() error {
 //	return nil
 //}
 
-//func BacklogProcessTask(cusFieldLoader *loader.CusFieldMilvus2xLoader, ctx context.Context, task *FileInfo) (error, bool) {
+//func BacklogProcessTask(cusFieldLoader *Loader.CustomMilvus2xLoader, ctx context.Context, task *FileInfo) (error, bool) {
 //	stateList, err := cusFieldLoader.CusMilvus2x.Milvus2x.GetMilvus().ListBulkInsertTasks(ctx, task.cn, 30)
 //	if err != nil {
 //		return err, true

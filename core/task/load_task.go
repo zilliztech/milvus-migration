@@ -3,31 +3,32 @@ package task
 import (
 	"context"
 	"github.com/zilliztech/milvus-migration/core/loader"
-	"github.com/zilliztech/milvus-migration/core/type/estype"
-	"go.uber.org/atomic"
 )
 
-type TaskLoader struct {
-	DataChannel      chan *FileInfo
-	CheckChannel     chan *FileInfo
-	CusFieldLoader   *loader.CusFieldMilvus2xLoader
-	JobId            string
-	ProcessTaskCount *atomic.Int32
-}
 type FileInfo struct {
 	fn     string //file name
 	cn     string // collection name
 	taskId int64  //milvus task Id
 }
-
-type CfgInfo struct {
+type Tasker struct {
+	Loader LoadTasker
+	Initer InitTasker
+}
+type InitTasker interface {
+	Init(ctx context.Context, loader *loader.CustomMilvus2xLoader) error
 }
 
-type Tasker interface {
-	Commit(fileName string, collection string)
-	Start(ctx context.Context, idxCfgs []*estype.IdxCfg) error
+type LoadTasker interface {
+	CloseDataChannel()
+	CloseCheckChannel()
+	// Commit : commit a data file to BaseLoadTasker chan for wait to write to milvus2.x
+	CommitData(fileInfo *FileInfo)
+	CommitCheck(task *FileInfo, taskId int64)
+	incTaskCount(task *FileInfo, taskId int64)
+	// Check : check task progress
 	Check(ctx context.Context) error
-	LoopCheckStateUntilSuc(ctx context.Context, task *FileInfo) error
+	GetDataChannel() chan *FileInfo
+	GetMilvusLoader() *loader.CustomMilvus2xLoader
 	LoopCheckBacklog() error
-	Close()
+	LoopCheckStateUntilSuc(ctx context.Context, task *FileInfo) error
 }

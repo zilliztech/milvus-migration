@@ -7,7 +7,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 )
 
-func (loader *CusFieldMilvus2xLoader) setMilvusInfo(idxCfgs []*estype.IdxCfg) error {
+func (loader *CustomMilvus2xLoader) InitCollectionInfoByES(idxCfgs []*estype.IdxCfg) error {
 
 	if idxCfgs == nil || len(idxCfgs) == 0 {
 		return errors.New("es meta data index is empty, cannot get CollectionInfo")

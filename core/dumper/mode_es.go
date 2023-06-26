@@ -5,6 +5,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/gstore"
+	"github.com/zilliztech/milvus-migration/core/loader"
 	"github.com/zilliztech/milvus-migration/core/meta"
 	"github.com/zilliztech/milvus-migration/core/reader/source"
 	"github.com/zilliztech/milvus-migration/core/task"
@@ -46,28 +47,14 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 	)
 	dp.cfg.SourceESConfig.Version = esMetaJson.Version
 
+	//create Milvus Loader
+	cusFieldLoader, err := loader.NewCusFieldMilvus2xLoader(dp.cfg)
+	if err != nil {
+		return err
+	}
+
 	for _, idxCfgs := range splitArray {
-
-		taskLoader, err := task.NewESTaskLoader(dp.cfg, dp.jobId)
-		if err != nil {
-			return err
-		}
-
-		var g errgroup.Group
-		g.Go(func() error {
-			return taskLoader.Start(ctx, idxCfgs)
-		})
-		g.Go(func() error {
-			return taskLoader.Check(ctx)
-		})
-
-		//wait dump finish first
-		err = dp.workESBatch(ctx, idxCfgs, taskLoader)
-		if err != nil {
-			return err
-		}
-
-		err = g.Wait()
+		err = dumpAndLoad(ctx, cusFieldLoader, dp, idxCfgs, err)
 		if err != nil {
 			return err
 		}
@@ -75,25 +62,52 @@ func (dp *Dumper) doDumpInEsMode(ctx context.Context) error {
 	return nil
 }
 
-func (dp *Dumper) workESBatch(ctx context.Context, idxCfgs []*estype.IdxCfg, submitter *task.TaskLoader) error {
+func dumpAndLoad(ctx context.Context, cusFieldLoader *loader.CustomMilvus2xLoader, dp *Dumper, idxCfgs []*estype.IdxCfg, err error) error {
+
+	start := time.Now()
+	tasker := task.NewTasker(task.NewBaseLoadTasker(cusFieldLoader, dp.jobId),
+		task.NewESInitTasker(idxCfgs))
+
+	var g errgroup.Group
+	g.Go(func() error {
+		return tasker.Start(ctx)
+	})
+	g.Go(func() error {
+		return tasker.Progress(ctx)
+	})
+
+	//wait dump finish first
+	err = dp.workESBatch(ctx, idxCfgs, tasker)
+	if err != nil {
+		return err
+	}
+	err = g.Wait()
+	if err != nil {
+		return err
+	}
+	log.Info("ES Dump&Load Json file finish!!! ", zap.Float64("Cost", time.Since(start).Seconds()))
+	return nil
+}
+
+func (dp *Dumper) workESBatch(ctx context.Context, idxCfgs []*estype.IdxCfg, tasker *task.Tasker) error {
 
 	start := time.Now()
 	var g errgroup.Group
 	for i, _ := range idxCfgs {
 		finalI := i
 		g.Go(func() error {
-			return dp.workInESMode(ctx, idxCfgs[finalI], submitter)
+			return dp.workInESMode(ctx, idxCfgs[finalI], tasker)
 		})
 	}
 	err := g.Wait()
-	//dump finished, then close submitter, stop submit task
-	submitter.Close()
+	//dump finished, then close tasker, stop submit task
+	tasker.Close()
 	log.Info("ES Dump to Json file finish!!! ", zap.Float64("Cost", time.Since(start).Seconds()))
 	return err
 }
 
-func (dp *Dumper) workInESMode(ctx context.Context, idxCfg *estype.IdxCfg, submitter *task.TaskLoader) error {
-	err := dp.es2Json(ctx, idxCfg, submitter)
+func (dp *Dumper) workInESMode(ctx context.Context, idxCfg *estype.IdxCfg, tasker *task.Tasker) error {
+	err := dp.es2Json(ctx, idxCfg, tasker)
 	if err != nil {
 		return err
 	}
@@ -101,7 +115,7 @@ func (dp *Dumper) workInESMode(ctx context.Context, idxCfg *estype.IdxCfg, submi
 	return nil
 }
 
-func (dp *Dumper) es2Json(ctx context.Context, idxCfg *estype.IdxCfg, loadTasker *task.TaskLoader) error {
+func (dp *Dumper) es2Json(ctx context.Context, idxCfg *estype.IdxCfg, tasker *task.Tasker) error {
 
 	esSource := source.NewESSource(idxCfg, dp.cfg)
 	_, err := esSource.ReadFirst()
@@ -115,7 +129,7 @@ func (dp *Dumper) es2Json(ctx context.Context, idxCfg *estype.IdxCfg, loadTasker
 	for number := 1; number <= common.DUMP_SUB_TASK_NUM; number++ {
 		subTaskNumber := number
 		g.Go(func() error {
-			return dp.es2SubJson(idxCfg, subTaskNumber, wokReadCfg, ctx, channel, loadTasker)
+			return dp.es2SubJson(idxCfg, subTaskNumber, wokReadCfg, ctx, channel, tasker)
 		})
 	}
 	err = dp.loopReadESData(esSource)
@@ -141,8 +155,8 @@ func (dp *Dumper) loopReadESData(esSource *source.ESSource) error {
 	return nil
 }
 
-func (dp *Dumper) es2SubJson(idxCfg *estype.IdxCfg, subTaskNumber int, wokReadCfg *config.ReadConfig, ctx context.Context,
-	channelSource *source.ChannelSource, loader *task.TaskLoader) error {
+func (dp *Dumper) es2SubJson(idxCfg *estype.IdxCfg, number int, wokReadCfg *config.ReadConfig, ctx context.Context,
+	channelSource *source.ChannelSource, tasker *task.Tasker) error {
 
 	wokCfg := cloneWorkConfig(dp.cfg, idxCfg, wokReadCfg)
 	collection := esconvert.ToMilvusCollectionName(idxCfg)
@@ -151,7 +165,7 @@ func (dp *Dumper) es2SubJson(idxCfg *estype.IdxCfg, subTaskNumber int, wokReadCf
 	for continues {
 		//sort := gstore.GetFileSort(dp.jobId, collection)
 		targetFileName := util.GenerateESDataSubFileName(wokCfg.InnerWriteCfg.FileParam.FileDir,
-			subTaskNumber, sort)
+			number, sort)
 		wokCfg.InnerWriteCfg.FileParam.FileFullName = targetFileName
 
 		wok, err := worker.NewDumperWorkerWithChannel(wokCfg, channelSource)
@@ -160,7 +174,7 @@ func (dp *Dumper) es2SubJson(idxCfg *estype.IdxCfg, subTaskNumber int, wokReadCf
 		}
 		log.LL(ctx).Info("Begin to dump sub ES task data to subJson",
 			zap.String("Index", idxCfg.Index),
-			zap.Int("SubTaskNumber", subTaskNumber),
+			zap.Int("SubTaskNumber", number),
 			zap.Int("Sort", sort),
 			zap.Int("ReadBufferSize", wokCfg.InnerReadCfg.BufSize),
 			zap.Int("WriteBufferSize", wokCfg.InnerWriteCfg.BufSize),
@@ -177,12 +191,12 @@ func (dp *Dumper) es2SubJson(idxCfg *estype.IdxCfg, subTaskNumber int, wokReadCf
 		continues = response.RemainData
 		if !response.NoData {
 			gstore.AddFileTask(dp.jobId, collection, targetFileName)
-			loader.Commit(targetFileName, collection)
+			tasker.Commit(targetFileName, collection)
 		}
 
 		log.LL(ctx).Info("End to dump sub ES task Data to subJson",
 			zap.String("Index", idxCfg.Index),
-			zap.Int("SubTaskNumber", subTaskNumber),
+			zap.Int("SubTaskNumber", number),
 			zap.Int("Sort", sort),
 			zap.String("Source ESUrl", strings.Join(dp.cfg.SourceESConfig.Urls, ",")),
 			zap.String("Target", wokCfg.InnerWriteCfg.FileParam.FileFullName))
@@ -191,7 +205,7 @@ func (dp *Dumper) es2SubJson(idxCfg *estype.IdxCfg, subTaskNumber int, wokReadCf
 
 	log.LL(ctx).Info("End to dump ES subTask Data to json",
 		zap.String("Index", idxCfg.Index),
-		zap.Int("SubTaskNumber", subTaskNumber),
+		zap.Int("SubTaskNumber", number),
 		zap.String("Source ESUrl", strings.Join(dp.cfg.SourceESConfig.Urls, ",")),
 		zap.String("Target", wokCfg.InnerWriteCfg.FileParam.FileFullName))
 	return nil
