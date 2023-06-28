@@ -4,46 +4,46 @@ import (
 	"context"
 )
 
-func NewTasker(loader LoadTasker, initer InitTasker) *Tasker {
-	return &Tasker{
+func NewTaskSubmitter(loader LoadTasker, initer InitTasker) *Submitter {
+	return &Submitter{
 		Loader: loader,
 		Initer: initer,
 	}
 }
 
-func (tasker Tasker) Close() {
-	tasker.Loader.CloseDataChannel()
+func (submiter Submitter) Close() {
+	submiter.Loader.CloseDataChannel()
 }
-func (tasker Tasker) Commit(fileName string, collection string) {
-	tasker.Loader.CommitData(&FileInfo{fn: fileName, cn: collection})
+func (submiter Submitter) Commit(fileName string, collection string) {
+	submiter.Loader.CommitData(&FileInfo{fn: fileName, cn: collection})
 }
-func (tasker Tasker) Progress(ctx context.Context) error {
-	return tasker.Loader.Check(ctx)
+func (submiter Submitter) Progress(ctx context.Context) error {
+	return submiter.Loader.Check(ctx)
 }
 
 // Start : start write data to milvus2.x
-func (tasker Tasker) Start(ctx context.Context) error {
+func (submiter Submitter) Start(ctx context.Context) error {
 
-	defer tasker.Loader.CloseCheckChannel()
+	defer submiter.Loader.CloseCheckChannel()
 
-	err := tasker.Initer.Init(ctx, tasker.Loader.GetMilvusLoader())
+	err := submiter.Initer.Init(ctx, submiter.Loader.GetMilvusLoader())
 	if err != nil {
 		return err
 	}
-	for task := range tasker.Loader.GetDataChannel() {
+	for task := range submiter.Loader.GetDataChannel() {
 
-		err := tasker.Loader.LoopCheckBacklog()
+		err := submiter.Loader.LoopCheckBacklog()
 		if err != nil {
 			return err
 		}
-		taskId, err := tasker.Loader.GetMilvusLoader().Write2Milvus(ctx, task.fn, task.cn)
+		taskId, err := submiter.Loader.GetMilvusLoader().Write2Milvus(ctx, task.fn, task.cn)
 		if err != nil {
 			return err
 		}
 
-		tasker.Loader.incTaskCount(task, taskId)
+		submiter.Loader.incTaskCount(task, taskId)
 
-		tasker.Loader.CommitCheck(task, taskId)
+		submiter.Loader.CommitCheck(task, taskId)
 	}
 	return nil
 }

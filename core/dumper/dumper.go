@@ -6,6 +6,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/gstore"
+	"github.com/zilliztech/milvus-migration/core/task"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"time"
@@ -18,7 +19,8 @@ type Dumper struct {
 	workMode    string
 
 	// runtime data
-	jobId string
+	jobId     string
+	Submitter *task.Submitter
 }
 
 func NewDumperWithConfig(cfg *config.MigrationConfig, jobId string) *Dumper {

@@ -6,6 +6,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/dumper"
 	"github.com/zilliztech/milvus-migration/core/loader"
 	"github.com/zilliztech/milvus-migration/internal/log"
+	"github.com/zilliztech/milvus-migration/starter/migration"
 	"github.com/zilliztech/milvus-migration/starter/param"
 )
 
@@ -78,19 +79,21 @@ func Start(ctx context.Context, configFile string, jobId string) error {
 	if err != nil {
 		return err
 	}
-	insCfg, err := stepConfig(configFile)
+	migrCfg, err := stepConfig(configFile)
+	if err != nil {
+		return err
+	}
+	starter, err := migration.NewStarter(migrCfg, jobId)
+	if err != nil {
+		return err
+	}
+	log.LL(ctx).Info("[Starter] begin to do migration...")
+	err = starter.Run(ctx)
 	if err != nil {
 		return err
 	}
 
-	dump := dumper.NewDumperWithConfig(insCfg, jobId)
-	log.LL(ctx).Info("[Start] begin to do migration!")
-	err = dump.Run(ctx)
-	if err != nil {
-		return err
-	}
-
-	clean, err := cleaner.NewCleaner(insCfg, jobId)
+	clean, err := cleaner.NewCleaner(migrCfg, jobId)
 	err = clean.ClenFiles()
 	if err != nil {
 		return err

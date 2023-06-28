@@ -10,7 +10,7 @@ type FileInfo struct {
 	cn     string // collection name
 	taskId int64  //milvus task Id
 }
-type Tasker struct {
+type Submitter struct {
 	Loader LoadTasker
 	Initer InitTasker
 }
