@@ -111,18 +111,21 @@ func (this *RVReader) AfterPublish() error {
 }
 
 func (this *RVReader) PublishTo(w io.Writer) (error, *PublishResponse) {
+	return this.publishTo(w), nil
+}
+func (this *RVReader) publishTo(w io.Writer) error {
 	defer log.Info("[RVReader] write file success", zap.String("file", this.FileFullName()))
 
 	// read delete info
 	err := this.deletedReader.readHead()
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	// high speed read
 	if !this.deletedReader.NeedSkipDelete() {
 		log.Warn("[RVReader] find empty deleted_docs, will write all data", zap.String("file", this.deletedReader.FileFullName()))
-		return this.publishDirectTo(w), nil
+		return this.publishDirectTo(w)
 	}
 
 	// slow speed read
@@ -130,14 +133,14 @@ func (this *RVReader) PublishTo(w io.Writer) (error, *PublishResponse) {
 
 	err = this.readHead()
 	if err != nil {
-		return err, nil
+		return err
 	}
 	this.head.DeleteOffset = rows
 
 	// write head
 	err = this.pushHeadTo(w)
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	// write body
@@ -151,11 +154,11 @@ func (this *RVReader) PublishTo(w io.Writer) (error, *PublishResponse) {
 			} else {
 				err := this.pushNData(w)
 				if err != nil {
-					return err, nil
+					return err
 				}
 			}
 		} else {
-			return this.pushDataLoopTo(w), nil
+			return this.pushDataLoopTo(w)
 		}
 	}
 }

@@ -33,22 +33,25 @@ func (this *FaissIdReader) AfterPublish() error {
 	// close file
 	return this.closeFileSource()
 }
-
 func (this *FaissIdReader) PublishTo(w io.Writer) (error, *PublishResponse) {
+	return this.publishTo(w), nil
+}
+
+func (this *FaissIdReader) publishTo(w io.Writer) error {
 	defer log.Info("[FaissIdReader] write faiss-id file success", zap.String("file", this.FileFullName()))
 
 	err := this.readHead()
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	// write head
 	err = this.pushHeadTo(w)
 	if err != nil {
-		return err, nil
+		return err
 	}
 
-	return this.pushIdList(w), nil
+	return this.pushIdList(w)
 }
 
 func (this *FaissIdReader) pushHeadTo(w io.Writer) error {

@@ -34,20 +34,24 @@ func (this *FaissDataReader) readHead() error {
 }
 
 func (this *FaissDataReader) PublishTo(w io.Writer) (error, *PublishResponse) {
+	return this.publishTo(w), nil
+}
+
+func (this *FaissDataReader) publishTo(w io.Writer) error {
 	defer log.Info("[FaissDataReader] write faiss-data file success", zap.String("file", this.FileFullName()))
 
 	err := this.readHead()
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	// write head
 	err = this.pushHeadTo(w)
 	if err != nil {
-		return err, nil
+		return err
 	}
 
-	return this.pushDataList(w), nil
+	return this.pushDataList(w)
 }
 
 // write data list
