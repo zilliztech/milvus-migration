@@ -13,6 +13,11 @@ func stepStore(jobId string) error {
 	return gstore.NewJobInfo(jobId)
 }
 
+func stepStoreWithSubTask(jobId string) error {
+	gstore.Init()
+	return gstore.NewJobInfoWithSubTask(jobId)
+}
+
 func stepConfig(configFile string) (*config.MigrationConfig, error) {
 	viper, err := config.InitConfigFile(configFile)
 	if err != nil {

@@ -75,7 +75,7 @@ func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId 
 }
 
 func Start(ctx context.Context, configFile string, jobId string) error {
-	err := stepStore(jobId)
+	err := stepStoreWithSubTask(jobId)
 	if err != nil {
 		return err
 	}

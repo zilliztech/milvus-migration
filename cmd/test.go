@@ -43,5 +43,5 @@ func init() {
 	testCmd.Flags().IntVarP(&min_id, "minId", "", 0, "test migration")
 	testCmd.Flags().IntVarP(&max_id, "maxId", "", 0, "test migration")
 
-	rootCmd.AddCommand(testCmd)
+	//rootCmd.AddCommand(testCmd)
 }

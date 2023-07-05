@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
+	"github.com/zilliztech/milvus-migration/core/data"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/task"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -19,8 +20,9 @@ type Dumper struct {
 	workMode    string
 
 	// runtime data
-	jobId     string
-	Submitter *task.Submitter
+	jobId          string
+	Submitter      *task.Submitter
+	ProcessHandler *data.ProcessHandler
 }
 
 func NewDumperWithConfig(cfg *config.MigrationConfig, jobId string) *Dumper {
@@ -52,8 +54,8 @@ func (this *Dumper) Run(ctx context.Context) error {
 // doDumpByWorkMode ：start dump task entry in different modes
 func (this *Dumper) doDumpByWorkMode(ctx context.Context) error {
 	switch common.DumpMode(this.workMode) {
-	case common.Elasticsearch:
-		return this.doDumpInEsMode(ctx)
+	//case common.Elasticsearch:
+	//	return this.doDumpInEsMode(ctx)
 	case common.Milvus1x:
 		return this.doDumpInMilvus1xMode(ctx)
 	case common.Faiss:

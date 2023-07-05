@@ -9,7 +9,7 @@ type MetaJSON struct {
 
 type IdxCfg struct {
 	Index     string     `json:"index"`
-	Rows      int        `json:"rows"`
+	Rows      int64      `json:"rows"`
 	Fields    []FieldCfg `json:"fields"`
 	MilvusCfg *MilvusCfg `json:"milvus"`
 

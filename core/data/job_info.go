@@ -24,7 +24,8 @@ type JobInfo struct {
 	FinishTasks *atomic.Int64 `json:"finishTasks"`
 
 	//key: collectionName/indexName, val: taskInfo,  一个task(index/Collection)可以由多个subTask来生成多个json文件
-	TaskMap map[string]*TaskInfo `json:"TaskMap"`
+	TaskMap     map[string]*TaskInfo
+	ProcHandler *ProcessHandler
 }
 
 type TaskInfo struct {
@@ -40,6 +41,15 @@ type TaskInfo struct {
 var lockTask = sync.RWMutex{}
 
 func NewJobInfo(jobId string) *JobInfo {
+	return &JobInfo{
+		JobId:       jobId,
+		JobStatus:   JobStatusInit,
+		TotalTasks:  0,
+		FinishTasks: atomic.NewInt64(0),
+	}
+}
+
+func NewJobInfoWithSubTask(jobId string) *JobInfo {
 	return &JobInfo{
 		JobId:       jobId,
 		JobStatus:   JobStatusInit,
@@ -101,11 +111,21 @@ func (this *JobInfo) SetTotalTasks(totalTasks int) {
 	this.JobStatus = JobStatusRunning
 }
 
+func (this *JobInfo) SetProcessInfo(processInfo *ProcessHandler) {
+	this.ProcHandler = processInfo
+}
+
 func (this *JobInfo) AddFinishTasks(increment int) {
 	this.FinishTasks.Add(int64(increment))
 }
 
 func (this *JobInfo) CalculateJobProcess() {
+
+	if this.ProcHandler != nil {
+		this.JobProcess = this.ProcHandler.CalProcess()
+		return
+	}
+
 	if this.TotalTasks == 0 {
 		this.JobProcess = 1
 		return

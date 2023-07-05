@@ -112,6 +112,7 @@ func (es7 *ES8ServerClient) Count(idxCfg *estype.IdxCfg) error {
 		log.Warn("Count ES data is empty", zap.String("Index", idxCfg.Index))
 		return errors.New("Count ES data is empty, Index:" + idxCfg.Index)
 	}
+	idxCfg.Rows = count
 	return nil
 }
 

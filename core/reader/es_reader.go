@@ -19,7 +19,7 @@ type ESReader struct {
 	ESSource *source.ESSource
 }
 
-const PrintSize = 100
+//const PrintSize = 100
 
 func NewESReader(esSource *source.ESSource) *ESReader {
 	esr := ESReader{
@@ -62,10 +62,11 @@ func (esr *ESReader) writeAll(writer io.Writer) (error, *PublishResponse) {
 	log.Info("[ESReader] begin to write json data...")
 	start := time.Now()
 
-	fileSize := 0       //当前写入json文件的大小
-	var batch = 0       //循环获取数据的次数，debug模式下查看运行速度
+	fileSize := 0 //当前写入json文件的大小
+	//var batch = 0       //循环获取数据的次数，debug模式下查看运行速度
 	remainData := false // 是否还需要生成新的小json文件
 	noData := true      //是否是首次获取数据
+	finishRows := 0
 
 	for data := range esr.ESSource.DataChannel {
 		if data.IsEmpty {
@@ -84,6 +85,7 @@ func (esr *ESReader) writeAll(writer io.Writer) (error, *PublishResponse) {
 		}
 		writer.Write(b)
 		fileSize += len(b)
+		finishRows += esr.ESSource.BatchSize
 
 		if fileSize >= common.SUB_FILE_SIZE {
 			remainData = true
@@ -92,16 +94,11 @@ func (esr *ESReader) writeAll(writer io.Writer) (error, *PublishResponse) {
 		}
 		if common.DEBUG {
 			log.Info("[ESReader] 3 Es data parser to Writer ======>", zap.Float64("Cost", time.Since(startParseDataTime).Seconds()))
-			if (batch % PrintSize) == 0 {
-				log.Info("[ESReader] 4 writing batch es data =======> ", zap.Int("Batch", batch),
-					zap.Float64("Cost", time.Since(start).Seconds()))
-			}
-			batch++
 		}
 	}
 	if !noData {
 		writer.Write(esparser.EndCharacter())
 	}
 	log.Info("[ESReader] success end to write json data=======>", zap.Float64("Cost", time.Since(start).Seconds()))
-	return nil, &PublishResponse{RemainData: remainData, NoData: noData}
+	return nil, &PublishResponse{RemainData: remainData, NoData: noData, FinishDataRows: finishRows}
 }

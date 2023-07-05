@@ -2,6 +2,8 @@ package migration
 
 import (
 	"context"
+	"github.com/zilliztech/milvus-migration/core/data"
+	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/task"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -25,24 +27,33 @@ func (starter *Starter) migrationES(ctx context.Context) error {
 
 func (starter *Starter) DumpLoadInES(ctx context.Context, idxCfgs []*estype.IdxCfg) error {
 
-	chanTasker := task.NewTaskSubmitter(task.NewBaseLoadTasker(starter.Loader, starter.JobId),
+	//管理进度处理器
+	processHandler := data.NewProcessHandler()
+	starter.Dumper.ProcessHandler = processHandler
+
+	submitter := task.NewSubmitter(task.NewBaseLoadTasker(starter.Loader, processHandler, starter.JobId),
 		task.NewESInitTasker(idxCfgs))
-	starter.Dumper.Submitter = chanTasker
+	//submitter： dump->load 大任务拆分小任务不断提交
+	starter.Dumper.Submitter = submitter
 
 	var g errgroup.Group
 	g.Go(func() error {
-		return chanTasker.Start(ctx)
+		return submitter.Start(ctx)
 	})
 	g.Go(func() error {
-		return chanTasker.Progress(ctx)
+		return submitter.Progress(ctx)
 	})
 
 	//will wait dump finish
 	err := starter.Dumper.WorkBatchInES(ctx, idxCfgs)
-	//dump finish: close chanTasker, stop submit task to loader
-	chanTasker.Close()
+	//dump finish: close submitter, stop submit task to loader
+	submitter.Close()
 	if err != nil {
 		return err
 	}
-	return g.Wait()
+	err = g.Wait()
+
+	gstore.SetProcessInfo(starter.JobId, processHandler)
+
+	return err
 }

@@ -2,48 +2,30 @@ package task
 
 import (
 	"context"
+	"github.com/zilliztech/milvus-migration/core/loader"
 )
 
-func NewTaskSubmitter(loader LoadTasker, initer InitTasker) *Submitter {
-	return &Submitter{
-		Loader: loader,
-		Initer: initer,
-	}
+type FileInfo struct {
+	fn     string //file name
+	cn     string // collection name
+	taskId int64  //milvus task Id
 }
 
-func (submiter Submitter) Close() {
-	submiter.Loader.CloseDataChannel()
-}
-func (submiter Submitter) Commit(fileName string, collection string) {
-	submiter.Loader.CommitData(&FileInfo{fn: fileName, cn: collection})
-}
-func (submiter Submitter) Progress(ctx context.Context) error {
-	return submiter.Loader.Check(ctx)
+type InitTasker interface {
+	Init(ctx context.Context, loader *loader.CustomMilvus2xLoader) error
 }
 
-// Start : start write data to milvus2.x
-func (submiter Submitter) Start(ctx context.Context) error {
-
-	defer submiter.Loader.CloseCheckChannel()
-
-	err := submiter.Initer.Init(ctx, submiter.Loader.GetMilvusLoader())
-	if err != nil {
-		return err
-	}
-	for task := range submiter.Loader.GetDataChannel() {
-
-		err := submiter.Loader.LoopCheckBacklog()
-		if err != nil {
-			return err
-		}
-		taskId, err := submiter.Loader.GetMilvusLoader().Write2Milvus(ctx, task.fn, task.cn)
-		if err != nil {
-			return err
-		}
-
-		submiter.Loader.incTaskCount(task, taskId)
-
-		submiter.Loader.CommitCheck(task, taskId)
-	}
-	return nil
+type LoadTasker interface {
+	CloseDataChannel()
+	CloseCheckChannel()
+	// Commit : commit a data file to BaseLoadTasker chan for wait to write to milvus2.x
+	CommitData(fileInfo *FileInfo)
+	CommitCheck(task *FileInfo, taskId int64)
+	incTaskCount(task *FileInfo, taskId int64)
+	// Check : check task progress
+	Check(ctx context.Context) error
+	GetDataChannel() chan *FileInfo
+	GetMilvusLoader() *loader.CustomMilvus2xLoader
+	LoopCheckBacklog() error
+	LoopCheckStateUntilSuc(ctx context.Context, task *FileInfo) error
 }

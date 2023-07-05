@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/core/data"
 	"github.com/zilliztech/milvus-migration/core/dbclient"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/loader"
@@ -19,21 +20,25 @@ type BaseLoadTasker struct {
 	CusFieldLoader   *loader.CustomMilvus2xLoader
 	JobId            string
 	ProcessTaskCount *atomic.Int32
+	ProcessHandler   *data.ProcessHandler
 }
 
-func NewBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, jobId string) *BaseLoadTasker {
+func NewBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, processHandler *data.ProcessHandler, jobId string) *BaseLoadTasker {
 	loadTasker := &BaseLoadTasker{
 		DataChannel:      make(chan *FileInfo, 100),
 		CheckChannel:     make(chan *FileInfo, 100),
 		CusFieldLoader:   cusFieldLoader,
 		JobId:            jobId,
 		ProcessTaskCount: atomic.NewInt32(0),
+		ProcessHandler:   processHandler,
 	}
 	return loadTasker
 }
 
 func (tasker BaseLoadTasker) CloseDataChannel() {
 	close(tasker.DataChannel)
+	//当dump结束后，设置load还剩下的任务总数量
+	tasker.ProcessHandler.SetLoadTotalSize(int(tasker.ProcessTaskCount.Load()))
 }
 func (tasker BaseLoadTasker) CloseCheckChannel() {
 	close(tasker.CheckChannel)
@@ -74,6 +79,7 @@ func (tasker BaseLoadTasker) Check(ctx context.Context) error {
 			zap.String("fileName", task.fn), zap.Int64("taskId", task.taskId))
 	}
 	tasker.CusFieldLoader.After(ctx)
+	tasker.ProcessHandler.SetLoadFinished()
 	return nil
 }
 
@@ -86,6 +92,7 @@ func (tasker BaseLoadTasker) LoopCheckStateUntilSuc(ctx context.Context, task *F
 	if stateErr == nil {
 		gstore.FinishFileTask(tasker.JobId, task.cn, task.fn) //finish
 		count := tasker.ProcessTaskCount.Dec()
+		tasker.ProcessHandler.AddLoadFinishSize(1)
 		log.Info("[LoadTasker] Dec Task Processing-------------->", zap.Int32("Count", count),
 			zap.String("fileName", task.fn), zap.Int64("taskId", task.taskId))
 		return nil
