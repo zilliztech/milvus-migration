@@ -90,3 +90,26 @@ func handleGetJob(c *gin.Context) (interface{}, error) {
 	info.CalculateJobProcess()
 	return info, nil
 }
+
+// @Summary migration start
+// @Description migration start
+// @Tags Migration
+// @Param RequestId header string false "RequestId"
+// @Param object body param.StartParam true "param"
+// @Produce json
+// @Success 200 {object} string
+// @Router /start [post]
+func handleStart(c *gin.Context) (interface{}, error) {
+	var req param.StartParam
+	err := c.BindJSON(&req)
+	if err != nil {
+		return nil, err
+	}
+	jobId := util.GenerateUUID("start_")
+	if req.Async {
+		go starter.Start(log.NewContextWithRequestId(c.Request.Context()), "", jobId)
+		return param.NewJobResponse(jobId), nil
+	}
+
+	return param.NewJobResponse(jobId), starter.Start(c.Request.Context(), "", jobId)
+}

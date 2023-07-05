@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	HEALTHY_API   = "/healthy"
-	DUMP_DATA_API = "/dump"
-	LOAD_DATA_API = "/load"
-	GET_JOB_API   = "/get_job"
+	HEALTHY_API    = "/healthy"
+	START_DATA_API = "/start"
+	DUMP_DATA_API  = "/dump"
+	LOAD_DATA_API  = "/load"
+	GET_JOB_API    = "/get_job"
 
 	API_V1_PREFIX = "/api/v1"
 	DOCS_API      = "/docs/*any"
@@ -61,10 +62,10 @@ func (s *Server) registerHTTPServer() {
 
 	// hello
 	apiV1.GET(HEALTHY_API, wrap(handleHealthy))
+	apiV1.POST(START_DATA_API, wrap(handleStart))
 	apiV1.POST(DUMP_DATA_API, wrap(handleDump))
 	apiV1.POST(LOAD_DATA_API, wrap(handleLoad))
 	apiV1.GET(GET_JOB_API, wrap(handleGetJob))
-
 	r.GET(DOCS_API, ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	s.engine = r

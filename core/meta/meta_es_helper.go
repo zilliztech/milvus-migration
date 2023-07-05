@@ -38,6 +38,8 @@ func (this *MetaHelper) getESMeta(ctx context.Context) (*estype.MetaJSON, error)
 	switch this.metaCfg.MetaMode {
 	case "mock", "local":
 		metaJson, err = this.getMockESMeta()
+	case "config":
+		metaJson, err = this.getConfigESMeta()
 	case "sqlite":
 		metaJson, err = NewSqliteMetaReader(this.metaCfg.LocalSqliteFile).GetESMeta(ctx)
 	case "mysql":
@@ -77,4 +79,8 @@ func (this *MetaHelper) getMockESMeta() (*estype.MetaJSON, error) {
 	}
 	defer file.Close()
 	return util.GetESMeta(file)
+}
+
+func (this *MetaHelper) getConfigESMeta() (*estype.MetaJSON, error) {
+	return this.metaCfg.EsMeta, nil
 }

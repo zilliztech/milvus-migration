@@ -82,7 +82,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		metaConfig, err := resolveMetaConfig(v)
+		metaConfig, err := resolveMetaConfig(v, common.Milvus1x)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		cfg.MetaConfig, err = resolveMetaConfig(v)
+		cfg.MetaConfig, err = resolveMetaConfig(v, common.Elasticsearch)
 		if err != nil {
 			return nil, err
 		}

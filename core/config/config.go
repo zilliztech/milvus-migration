@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/viper"
 	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"hash/fnv"
@@ -92,6 +93,8 @@ type MetaConfig struct {
 
 	// remote meta
 	RemoteMetaFile string
+
+	EsMeta *estype.MetaJSON
 }
 
 type DumperWorkConfig struct {
