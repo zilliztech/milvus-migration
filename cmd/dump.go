@@ -39,8 +39,8 @@ var dumpCmd = &cobra.Command{
 		fmt.Println("jodId is ", jobId)
 
 		defer func() {
-			if err := recover(); err != nil {
-				fmt.Printf("[dump error panic]: %s\n", err.(string))
+			if _any := recover(); _any != nil {
+				handlePanic(_any, jobId)
 				return
 			}
 		}()

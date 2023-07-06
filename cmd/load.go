@@ -35,8 +35,8 @@ var loadCmd = &cobra.Command{
 		fmt.Println("jodId is ", jobId)
 
 		defer func() {
-			if err := recover(); err != nil {
-				fmt.Printf("[load error panic]: %s\n", err.(string))
+			if _any := recover(); _any != nil {
+				handlePanic(_any, jobId)
 				return
 			}
 		}()

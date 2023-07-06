@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/util"
@@ -106,10 +107,33 @@ func handleStart(c *gin.Context) (interface{}, error) {
 		return nil, err
 	}
 	jobId := util.GenerateUUID("start_")
+
+	defer func() {
+		if _any := recover(); _any != nil {
+			handlePanic(_any, jobId)
+			return
+		}
+	}()
+
 	if req.Async {
 		go starter.Start(log.NewContextWithRequestId(c.Request.Context()), "", jobId)
 		return param.NewJobResponse(jobId), nil
 	}
 
 	return param.NewJobResponse(jobId), starter.Start(c.Request.Context(), "", jobId)
+}
+
+func handlePanic(_any any, jobId string) {
+	var errMsg string
+	err, ok := _any.(error)
+	if ok {
+		errMsg = err.Error()
+	} else {
+		errMsg, _ = _any.(string)
+	}
+	if err == nil {
+		err = errors.New(errMsg)
+	}
+	fmt.Printf("Handle invoke Migration panic error! Job: %s , err: %s\n", jobId, errMsg)
+	gstore.RecordJobError(jobId, err)
 }

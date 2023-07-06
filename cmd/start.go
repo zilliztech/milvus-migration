@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zilliztech/milvus-migration/core/gstore"
@@ -26,8 +27,8 @@ var startCmd = &cobra.Command{
 		fmt.Println("jodId is ", jobId)
 
 		defer func() {
-			if err := recover(); err != nil {
-				fmt.Printf("[start migration error panic]: %s\n", err.(string))
+			if _any := recover(); _any != nil {
+				handlePanic(_any, jobId)
 				return
 			}
 		}()
@@ -41,6 +42,21 @@ var startCmd = &cobra.Command{
 		val, _ := json.Marshal(&jobInfo)
 		fmt.Printf("Migration JobInfo! %s", string(val))
 	},
+}
+
+func handlePanic(_any any, jobId string) {
+	var errMsg string
+	err, ok := _any.(error)
+	if ok {
+		errMsg = err.Error()
+	} else {
+		errMsg, _ = _any.(string)
+	}
+	if err == nil {
+		err = errors.New(errMsg)
+	}
+	fmt.Printf("Migration panic error! Job: %s , err: %s\n", jobId, errMsg)
+	gstore.RecordJobError(jobId, err)
 }
 
 func init() {
