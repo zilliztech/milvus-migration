@@ -34,15 +34,6 @@ func NewJobInfo(jobId string) error {
 	return nil
 }
 
-func NewJobInfoWithSubTask(jobId string) error {
-	jobInfo := data.NewJobInfoWithSubTask(jobId)
-	err := Add(jobId, jobInfo)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func RecordJobError(jobId string, err error) {
 	jobInfo := mustGetJobInfo(jobId)
 	jobInfo.SetJobStatus(data.JobStatusFail, err)
@@ -61,22 +52,4 @@ func SetTotalTasks(jobId string, totalTasks int) {
 func AddFinishTasks(jobId string, increment int) {
 	jobInfo := mustGetJobInfo(jobId)
 	jobInfo.AddFinishTasks(increment)
-}
-
-func SetProcessInfo(jobId string, processInfo *data.ProcessHandler) {
-	jobInfo := mustGetJobInfo(jobId)
-	jobInfo.SetProcessInfo(processInfo)
-}
-
-func GetFileSort(jobId string, collection string) int32 {
-	jobInfo := mustGetJobInfo(jobId)
-	return jobInfo.GetFileSort(collection)
-}
-func AddFileTask(jobId string, collection string, fileName string) {
-	jobInfo := mustGetJobInfo(jobId)
-	jobInfo.AddFileTask(collection, fileName)
-}
-func FinishFileTask(jobId string, collection string, fileName string) {
-	jobInfo := mustGetJobInfo(jobId)
-	jobInfo.FinishFileTask(collection, fileName)
 }

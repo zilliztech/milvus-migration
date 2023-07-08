@@ -1,65 +1,85 @@
 package data
 
 import (
+	"context"
 	"github.com/shopspring/decimal"
+	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 )
+
+const One_Percent = 1
+const Half_Percent = 50
+const Hundred_Percent = 100
 
 type ProcessHandler struct {
 	DumpFinish     bool
 	DumpTotalSize  int64
-	DumpFinishSize *atomic.Int64
+	DumpFinishSize *atomic.Int64 //record rows
 
-	LoadFinish      bool
-	LoadTotalFiles  int
-	LoadFinishFiles *atomic.Int64
+	LoadFinish        bool
+	LoadTotalFiles    *atomic.Int32 //record files
+	LoadUnFinishFiles int32
+
+	lastPercent int
 }
 
 func NewProcessHandler() *ProcessHandler {
 	return &ProcessHandler{
-		DumpFinishSize:  atomic.NewInt64(0),
-		LoadFinishFiles: atomic.NewInt64(0),
+		DumpFinishSize: atomic.NewInt64(0),
+
+		LoadTotalFiles: atomic.NewInt32(0),
 	}
 }
-func (p *ProcessHandler) SetDumpFinished() {
-	p.DumpFinish = true
-}
+
 func (p *ProcessHandler) SetLoadFinished() {
 	p.LoadFinish = true
 }
 func (p *ProcessHandler) SetDumpTotalSize(totalSize int64) {
 	p.DumpTotalSize = totalSize
 }
-func (p *ProcessHandler) AddDumpFinishSize(increment int) {
+func (p *ProcessHandler) AddDumpedSize(increment int, ctx context.Context) {
 	p.DumpFinishSize.Add(int64(increment))
+	p.LoadTotalFiles.Inc()
+	log.LL(ctx).Info("=================>JobProcess!", zap.Int("Percent", p.CalcProcess()))
 }
 
-func (p *ProcessHandler) SetLoadTotalSize(totalSize int) {
-	p.LoadTotalFiles = totalSize
+func (p *ProcessHandler) SetDumpFinished() {
+	p.DumpFinish = true
 }
-func (p *ProcessHandler) AddLoadFinishSize(increment int) {
+func (p *ProcessHandler) SetUnLoadSize(processingCount int32, ctx context.Context) {
 	if p.DumpFinish {
-		p.LoadFinishFiles.Add(int64(increment))
+		p.LoadUnFinishFiles = processingCount
+		log.LL(ctx).Info("=================>JobProcess", zap.Int("Percent", p.CalcProcess()))
 	}
 }
 
-func (p *ProcessHandler) CalProcess() int {
+func (p *ProcessHandler) CalcProcess() int {
+	percent := p.calcProcess0()
+	if percent > p.lastPercent {
+		p.lastPercent = percent
+	}
+	return p.lastPercent
+}
+func (p *ProcessHandler) calcProcess0() int {
 	if p.LoadFinish {
-		return 100
+		return Hundred_Percent
 	}
 	if p.DumpFinish {
-		if p.LoadTotalFiles == 0 {
-			return 50
+		var unLoad = p.LoadUnFinishFiles
+		if unLoad == 0 {
+			return Half_Percent
 		}
-		up := decimal.NewFromInt(p.LoadFinishFiles.Load())
-		down := decimal.NewFromInt(int64(p.LoadTotalFiles))
-		return 50 + int(up.DivRound(down, 2).Mul(decimal.NewFromInt(50)).IntPart())
+		totalLoad := p.LoadTotalFiles.Load()
+		up := decimal.NewFromInt(int64(totalLoad - unLoad))
+		down := decimal.NewFromInt(int64(totalLoad))
+		return Half_Percent + int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
 	} else {
 		if p.DumpTotalSize == 0 {
-			return 1
+			return One_Percent
 		}
 		up := decimal.NewFromInt(p.DumpFinishSize.Load())
 		down := decimal.NewFromInt(p.DumpTotalSize)
-		return int(up.DivRound(down, 2).Mul(decimal.NewFromInt(50)).IntPart())
+		return int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
 	}
 }

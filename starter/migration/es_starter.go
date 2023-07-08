@@ -2,8 +2,6 @@ package migration
 
 import (
 	"context"
-	"github.com/zilliztech/milvus-migration/core/data"
-	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/task"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -27,11 +25,7 @@ func (starter *Starter) migrationES(ctx context.Context) error {
 
 func (starter *Starter) DumpLoadInES(ctx context.Context, idxCfgs []*estype.IdxCfg) error {
 
-	//管理进度处理器
-	processHandler := data.NewProcessHandler()
-	starter.Dumper.ProcessHandler = processHandler
-
-	submitter := task.NewSubmitter(task.NewBaseLoadTasker(starter.Loader, processHandler, starter.JobId),
+	submitter := task.NewSubmitter(task.NewBaseLoadTasker(starter.Loader, starter.JobId),
 		task.NewESInitTasker(idxCfgs))
 	//submitter： dump->load 大任务拆分小任务不断提交
 	starter.Dumper.Submitter = submitter
@@ -52,8 +46,6 @@ func (starter *Starter) DumpLoadInES(ctx context.Context, idxCfgs []*estype.IdxC
 		return err
 	}
 	err = g.Wait()
-
-	gstore.SetProcessInfo(starter.JobId, processHandler)
 
 	return err
 }

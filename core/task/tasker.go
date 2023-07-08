@@ -21,7 +21,7 @@ type LoadTasker interface {
 	// Commit : commit a data file to BaseLoadTasker chan for wait to write to milvus2.x
 	CommitData(fileInfo *FileInfo)
 	CommitCheck(task *FileInfo, taskId int64)
-	incTaskCount(task *FileInfo, taskId int64)
+	incTaskCount(ctx context.Context, task *FileInfo, taskId int64)
 	// Check : check task progress
 	Check(ctx context.Context) error
 	GetDataChannel() chan *FileInfo

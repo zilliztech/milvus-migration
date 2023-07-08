@@ -13,12 +13,12 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 
 	dumpWrkLimit := v.GetInt("dumper.worker.limit")
 	if dumpWrkLimit <= 0 {
-		return nil, errors.New("[dumper.worker.limit] must > 0")
+		dumpWrkLimit = 2
 	}
 
 	loadWrkLimit := v.GetInt("loader.worker.limit")
 	if loadWrkLimit <= 0 {
-		return nil, errors.New("[loader.worker.limit] must > 0")
+		loadWrkLimit = 2
 	}
 
 	// first get workMode
@@ -217,12 +217,15 @@ func resolveDumpWorkConfig(v *viper.Viper, limit int) (*DumperWorkConfig, error)
 	if err != nil {
 		return nil, err
 	}
-
+	var writerBufferSize = v.GetInt("dumper.worker.writer.bufferSize")
+	if writerBufferSize <= 0 {
+		writerBufferSize = 1048576
+	}
 	return &DumperWorkConfig{
 		WorkMode:         workMode,
 		Limit:            limit,
 		ReaderBufferSize: v.GetInt("dumper.worker.reader.bufferSize"),
-		WriterBufferSize: v.GetInt("dumper.worker.writer.bufferSize"),
+		WriterBufferSize: writerBufferSize,
 	}, nil
 }
 

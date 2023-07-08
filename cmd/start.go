@@ -38,10 +38,22 @@ var startCmd = &cobra.Command{
 			return
 		}
 		fmt.Printf("Migration Success! Job %s cost=[%f]\n", jobId, time.Since(start).Seconds())
-		jobInfo, _ := gstore.GetJobInfo(jobId)
-		val, _ := json.Marshal(&jobInfo)
-		fmt.Printf("Migration JobInfo! %s", string(val))
+		printJobMessage(jobId)
 	},
+}
+
+func printJobMessage(jobId string) {
+	jobInfo, _ := gstore.GetJobInfo(jobId)
+	val, _ := json.Marshal(&jobInfo)
+	fmt.Printf("Migration JobInfo: %s\n", string(val))
+
+	procInfo := gstore.GetProcessHandler(jobId)
+	val, _ = json.Marshal(&procInfo)
+	fmt.Printf("Migration ProcessInfo: %s, Process:%d\n", string(val), procInfo.CalcProcess())
+
+	fileTaskInfo := gstore.GetFileTask(jobId)
+	val, _ = json.Marshal(&fileTaskInfo)
+	fmt.Printf("Migration FileTaskInfo:  %s\n", string(val))
 }
 
 func handlePanic(_any any, jobId string) {

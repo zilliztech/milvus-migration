@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
-	"github.com/zilliztech/milvus-migration/core/data"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/task"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -20,9 +19,8 @@ type Dumper struct {
 	workMode    string
 
 	// runtime data
-	jobId          string
-	Submitter      *task.Submitter
-	ProcessHandler *data.ProcessHandler
+	jobId     string
+	Submitter *task.Submitter
 }
 
 func NewDumperWithConfig(cfg *config.MigrationConfig, jobId string) *Dumper {

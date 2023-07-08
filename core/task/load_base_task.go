@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/zilliztech/milvus-migration/core/common"
-	"github.com/zilliztech/milvus-migration/core/data"
 	"github.com/zilliztech/milvus-migration/core/dbclient"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/loader"
@@ -15,30 +14,28 @@ import (
 )
 
 type BaseLoadTasker struct {
-	DataChannel      chan *FileInfo
-	CheckChannel     chan *FileInfo
-	CusFieldLoader   *loader.CustomMilvus2xLoader
-	JobId            string
-	ProcessTaskCount *atomic.Int32
-	ProcessHandler   *data.ProcessHandler
+	DataChannel       chan *FileInfo
+	CheckChannel      chan *FileInfo
+	CusFieldLoader    *loader.CustomMilvus2xLoader
+	JobId             string
+	BulkInsertingNums *atomic.Int32
 }
 
-func NewBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, processHandler *data.ProcessHandler, jobId string) *BaseLoadTasker {
+func NewBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, jobId string) *BaseLoadTasker {
 	loadTasker := &BaseLoadTasker{
-		DataChannel:      make(chan *FileInfo, 100),
-		CheckChannel:     make(chan *FileInfo, 100),
-		CusFieldLoader:   cusFieldLoader,
-		JobId:            jobId,
-		ProcessTaskCount: atomic.NewInt32(0),
-		ProcessHandler:   processHandler,
+		DataChannel:       make(chan *FileInfo, 100),
+		CheckChannel:      make(chan *FileInfo, 100),
+		CusFieldLoader:    cusFieldLoader,
+		JobId:             jobId,
+		BulkInsertingNums: atomic.NewInt32(0),
 	}
 	return loadTasker
 }
 
 func (tasker BaseLoadTasker) CloseDataChannel() {
 	close(tasker.DataChannel)
-	//当dump结束后，设置load还剩下的任务总数量
-	tasker.ProcessHandler.SetLoadTotalSize(int(tasker.ProcessTaskCount.Load()))
+	//当dump结束后
+	gstore.GetProcessHandler(tasker.JobId).SetDumpFinished()
 }
 func (tasker BaseLoadTasker) CloseCheckChannel() {
 	close(tasker.CheckChannel)
@@ -58,8 +55,9 @@ func (tasker BaseLoadTasker) CommitCheck(task *FileInfo, taskId int64) {
 	tasker.CheckChannel <- task
 }
 
-func (tasker BaseLoadTasker) incTaskCount(task *FileInfo, taskId int64) {
-	count := tasker.ProcessTaskCount.Inc()
+func (tasker BaseLoadTasker) incTaskCount(ctx context.Context, task *FileInfo, taskId int64) {
+	count := tasker.BulkInsertingNums.Inc()
+	gstore.GetProcessHandler(tasker.JobId).SetUnLoadSize(count, ctx)
 	log.Info("[LoadTasker] Inc Task Processing-------------->", zap.Int32("Count", count),
 		zap.String("fileName", task.fn), zap.Int64("taskId", taskId))
 }
@@ -79,7 +77,7 @@ func (tasker BaseLoadTasker) Check(ctx context.Context) error {
 			zap.String("fileName", task.fn), zap.Int64("taskId", task.taskId))
 	}
 	tasker.CusFieldLoader.After(ctx)
-	tasker.ProcessHandler.SetLoadFinished()
+	gstore.GetProcessHandler(tasker.JobId).SetLoadFinished()
 	return nil
 }
 
@@ -90,9 +88,9 @@ func (tasker BaseLoadTasker) LoopCheckStateUntilSuc(ctx context.Context, task *F
 		stateErr = tasker.CusFieldLoader.CheckMilvusState(ctx, task.taskId)
 	}
 	if stateErr == nil {
-		gstore.FinishFileTask(tasker.JobId, task.cn, task.fn) //finish
-		count := tasker.ProcessTaskCount.Dec()
-		tasker.ProcessHandler.AddLoadFinishSize(1)
+		gstore.FinishFileSubTask(tasker.JobId, task.cn, task.fn) //finish
+		count := tasker.BulkInsertingNums.Dec()
+		gstore.GetProcessHandler(tasker.JobId).SetUnLoadSize(count, ctx)
 		log.Info("[LoadTasker] Dec Task Processing-------------->", zap.Int32("Count", count),
 			zap.String("fileName", task.fn), zap.Int64("taskId", task.taskId))
 		return nil
@@ -100,10 +98,10 @@ func (tasker BaseLoadTasker) LoopCheckStateUntilSuc(ctx context.Context, task *F
 	return stateErr
 }
 func (tasker BaseLoadTasker) LoopCheckBacklog() error {
-	count := tasker.ProcessTaskCount.Load()
+	count := tasker.BulkInsertingNums.Load()
 	for count > 20 {
 		time.Sleep(common.LOAD_CHECK_BACKLOG_INTERVAL)
-		count = tasker.ProcessTaskCount.Load()
+		count = tasker.BulkInsertingNums.Load()
 	}
 	return nil
 }

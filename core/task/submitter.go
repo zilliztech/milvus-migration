@@ -46,7 +46,7 @@ func (submiter Submitter) Start(ctx context.Context) error {
 			return err
 		}
 
-		submiter.Loader.incTaskCount(task, taskId)
+		submiter.Loader.incTaskCount(ctx, task, taskId)
 
 		submiter.Loader.CommitCheck(task, taskId)
 	}

@@ -88,7 +88,12 @@ func handleGetJob(c *gin.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	info.CalculateJobProcess()
+	ph := gstore.GetProcessHandler(jobId)
+	if ph != nil {
+		info.JobProcess = ph.CalcProcess()
+	} else {
+		info.CalculateJobProcess()
+	}
 	return info, nil
 }
 

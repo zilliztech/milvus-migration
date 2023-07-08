@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zilliztech/milvus-migration/core/cleaner"
 	"github.com/zilliztech/milvus-migration/core/dumper"
+	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/loader"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/starter/migration"
@@ -75,14 +76,22 @@ func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId 
 }
 
 func Start(ctx context.Context, configFile string, jobId string) error {
-	err := stepStoreWithSubTask(jobId)
+	err := stepStore(jobId)
 	if err != nil {
 		return err
 	}
+
+	//record: es dump will split many small json file task
+	gstore.InitFileTask(jobId)
+
 	migrCfg, err := stepConfig(configFile)
 	if err != nil {
 		return err
 	}
+
+	//管理进度处理器
+	gstore.InitProcessHandler(jobId)
+
 	starter, err := migration.NewStarter(migrCfg, jobId)
 	if err != nil {
 		return err

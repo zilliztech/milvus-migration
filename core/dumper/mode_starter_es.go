@@ -55,7 +55,6 @@ func (dp *Dumper) WorkOneInES(ctx context.Context, idxCfg *estype.IdxCfg) error 
 		return err
 	}
 	gstore.AddFinishTasks(dp.jobId, 1)
-	dp.ProcessHandler.SetDumpFinished()
 	return nil
 }
 
@@ -68,7 +67,7 @@ func (dp *Dumper) StreamDataInES(ctx context.Context, idxCfg *estype.IdxCfg) err
 	}
 	channel := source.NewChannelSource(esSource)
 	//设置进度相关信息：dump总数量
-	dp.ProcessHandler.SetDumpTotalSize(idxCfg.Rows)
+	gstore.GetProcessHandler(dp.jobId).SetDumpTotalSize(idxCfg.Rows)
 
 	wokReadCfg := CloneWorkReadConfig(dp.cfg)
 	var g errgroup.Group
@@ -135,8 +134,8 @@ func (dp *Dumper) SubJsonDataInES(idxCfg *estype.IdxCfg, number int, wokReadCfg 
 		}
 		continues = response.RemainData
 		if !response.NoData {
-			dp.ProcessHandler.AddDumpFinishSize(response.FinishDataRows)
-			gstore.AddFileTask(dp.jobId, collection, targetFileName)
+			gstore.GetProcessHandler(dp.jobId).AddDumpedSize(response.FinishDataRows, ctx)
+			gstore.AddFileSubTask(dp.jobId, collection, targetFileName)
 			dp.Submitter.Commit(targetFileName, collection)
 		}
 

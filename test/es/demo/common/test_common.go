@@ -106,8 +106,8 @@ func Info8_2(client *elasticsearch.Client) error {
 func BulkInsert(min_id int, max_id int, indexName string) {
 	// 创建client
 	//client, err := elastic.NewClient(elastic.SetURL("localhost:9200"))
-	//client, err := elastic.NewClient(elastic.SetURL("http://10.15.9.78:9700"), elastic.SetSniff(false))
-	client, err := elastic.NewClient(elastic.SetURL("http://localhost:9200"), elastic.SetSniff(false))
+	client, err := elastic.NewClient(elastic.SetURL("http://10.15.9.78:9700"), elastic.SetSniff(false))
+	//client, err := elastic.NewClient(elastic.SetURL("http://localhost:9200"), elastic.SetSniff(false))
 	if err != nil {
 		// Handle error
 		fmt.Printf("连接失败: %v\n", err)

@@ -55,4 +55,4 @@ var DUMP_SUB_TASK_NUM = 3
 var LOAD_CHECK_BULK_STATE_INTERVAL = time.Second * 10 //second
 var LOAD_CHECK_BACKLOG_INTERVAL = time.Second * 10    //second
 // const SUB_FILE_SIZE = 1024 * 1024 * 512 //512MB
-const SUB_FILE_SIZE = 1024 * 1024 * 200
+const SUB_FILE_SIZE = 1024 * 1024 * 300
