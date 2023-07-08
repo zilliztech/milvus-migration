@@ -2,11 +2,22 @@ package data
 
 import (
 	"go.uber.org/atomic"
+	"sync"
 )
+
+var lockTask = sync.RWMutex{}
 
 type FileTask struct {
 	//key: collectionName/indexName, val: taskInfo,  一个task(index/Collection)可以由多个subTask来生成多个json文件
 	TaskMap map[string]*SubFileTask
+}
+
+func newSubTask() *SubFileTask {
+	return &SubFileTask{
+		FileSort:      atomic.NewInt32(0),
+		NoFinishFiles: make(map[string]bool),
+		FinishFiles:   make(map[string]bool),
+	}
 }
 
 type SubFileTask struct {

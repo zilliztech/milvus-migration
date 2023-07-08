@@ -3,7 +3,6 @@ package data
 import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/atomic"
-	"sync"
 )
 
 type JobStatus string
@@ -24,22 +23,12 @@ type JobInfo struct {
 	FinishTasks *atomic.Int64 `json:"finishTasks"`
 }
 
-var lockTask = sync.RWMutex{}
-
 func NewJobInfo(jobId string) *JobInfo {
 	return &JobInfo{
 		JobId:       jobId,
 		JobStatus:   JobStatusInit,
 		TotalTasks:  0,
 		FinishTasks: atomic.NewInt64(0),
-	}
-}
-
-func newSubTask() *SubFileTask {
-	return &SubFileTask{
-		FileSort:      atomic.NewInt32(0),
-		NoFinishFiles: make(map[string]bool),
-		FinishFiles:   make(map[string]bool),
 	}
 }
 
@@ -60,7 +49,6 @@ func (this *JobInfo) AddFinishTasks(increment int) {
 }
 
 func (this *JobInfo) CalculateJobProcess() {
-
 	if this.TotalTasks == 0 {
 		this.JobProcess = 1
 		return
