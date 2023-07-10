@@ -12,6 +12,9 @@ import (
 
 func (starter *Starter) migrationES(ctx context.Context) error {
 	idxListArray, err := starter.Dumper.InitDumpInEsMode(ctx)
+	if err != nil {
+		return err
+	}
 	start := time.Now()
 	for _, idxList := range idxListArray {
 		err = starter.DumpLoadInES(ctx, idxList)

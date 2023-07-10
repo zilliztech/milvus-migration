@@ -2,6 +2,8 @@ package starter
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/zilliztech/milvus-migration/core/cleaner"
 	"github.com/zilliztech/milvus-migration/core/dumper"
 	"github.com/zilliztech/milvus-migration/core/gstore"
@@ -9,6 +11,7 @@ import (
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/starter/migration"
 	"github.com/zilliztech/milvus-migration/starter/param"
+	"time"
 )
 
 func Dump(ctx context.Context, configFile string, param *param.DumpParam, jobId string) error {
@@ -76,6 +79,9 @@ func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId 
 }
 
 func Start(ctx context.Context, configFile string, jobId string) error {
+
+	start := time.Now()
+
 	err := stepStore(jobId)
 	if err != nil {
 		return err
@@ -108,5 +114,22 @@ func Start(ctx context.Context, configFile string, jobId string) error {
 		return err
 	}
 	log.LL(ctx).Info("[Cleaner] clean file success!")
+
+	fmt.Printf("Migration Success! Job %s cost=[%f]\n", jobId, time.Since(start).Seconds())
+	printStartJobMessage(jobId)
 	return nil
+}
+
+func printStartJobMessage(jobId string) {
+	jobInfo, _ := gstore.GetJobInfo(jobId)
+	val, _ := json.Marshal(&jobInfo)
+	fmt.Printf("Migration JobInfo: %s\n", string(val))
+
+	procInfo := gstore.GetProcessHandler(jobId)
+	val, _ = json.Marshal(&procInfo)
+	fmt.Printf("Migration ProcessInfo: %s, Process:%d\n", string(val), procInfo.CalcProcess())
+
+	fileTaskInfo := gstore.GetFileTask(jobId)
+	val, _ = json.Marshal(&fileTaskInfo)
+	fmt.Printf("Migration FileTaskInfo:  %s\n", string(val))
 }

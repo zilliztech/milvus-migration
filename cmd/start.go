@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -11,7 +10,6 @@ import (
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/starter"
 	"go.uber.org/zap"
-	"time"
 )
 
 var startCmd = &cobra.Command{
@@ -20,7 +18,6 @@ var startCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		start := time.Now()
 		ctx := context.Background()
 
 		jobId := util.GenerateUUID("start")
@@ -37,23 +34,7 @@ var startCmd = &cobra.Command{
 			log.Error("[start migration error]", zap.Error(err))
 			return
 		}
-		fmt.Printf("Migration Success! Job %s cost=[%f]\n", jobId, time.Since(start).Seconds())
-		printJobMessage(jobId)
 	},
-}
-
-func printJobMessage(jobId string) {
-	jobInfo, _ := gstore.GetJobInfo(jobId)
-	val, _ := json.Marshal(&jobInfo)
-	fmt.Printf("Migration JobInfo: %s\n", string(val))
-
-	procInfo := gstore.GetProcessHandler(jobId)
-	val, _ = json.Marshal(&procInfo)
-	fmt.Printf("Migration ProcessInfo: %s, Process:%d\n", string(val), procInfo.CalcProcess())
-
-	fileTaskInfo := gstore.GetFileTask(jobId)
-	val, _ = json.Marshal(&fileTaskInfo)
-	fmt.Printf("Migration FileTaskInfo:  %s\n", string(val))
 }
 
 func handlePanic(_any any, jobId string) {
