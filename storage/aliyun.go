@@ -75,7 +75,12 @@ func NewAliyunClient(cfg Cfg) (*MinioClient, error) {
 		opts.Creds = minioCred.NewStaticV4(cfg.AK, cfg.SK, "")
 	}
 
-	addr := fmt.Sprintf("%s.%s", cfg.Region, _aliyunEndpoint)
+	var addr string
+	if len(cfg.Endpoint) <= 0 {
+		addr = fmt.Sprintf("%s.%s", cfg.Region, _aliyunEndpoint)
+	} else {
+		addr = cfg.Endpoint
+	}
 	cli, err := minio.New(addr, &opts)
 	if err != nil {
 		return nil, fmt.Errorf("storage: new aliyun client %w", err)
