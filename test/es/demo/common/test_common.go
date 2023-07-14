@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
@@ -55,12 +56,13 @@ func GetClient8_2() *elasticsearch.Client {
 	cfg := elasticsearch.Config{
 		//Addresses: []string{"https://localhost:9200"},
 		//Addresses: []string{"http://10.15.9.78:9700"},
-		Addresses: []string{"https://10.15.11.224:9200"},
-		Username:  "elastic", //1
-		Password:  "elastic",
 
-		//CloudID: "xx", //2.es cloud: if set cloudId, Address cannot set, Error :new client error: cannot create client: both Addresses and CloudID are set
-		//APIKey: "xx",
+		//Addresses: []string{"https://10.15.11.224:9200"},
+		//Username:  "elastic", //1
+		//Password:  "elastic",
+
+		CloudID: "My_deployment:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvOjQ0MyQyOGUzYzNiYTc4ZGI0N2MxOTc0NWFlMDRjOGZlY2VmMyQxOTVlZTMzYWM2Mzg0ZDE3YWRhNTVhZGM4MDgwMThmNQ==", //2.es cloud: if set cloudId, Address cannot set, Error :new client error: cannot create client: both Addresses and CloudID are set
+		APIKey:  "SlRfV0Nva0JudUprS2VFOHNPYzg6MHNPSFlHcUtUMzZPdXhHWjBiU0lhZw==",
 
 		//ServiceToken: "eyJ2ZXIiOiI4LjIuMiIsImFkciI6WyIxMC4xNS4xMS4yMjQ6OTIwMCJdLCJmZ3IiOiIyYjNhYWMyZDgwMGU0NzhkODFlMzNhMWQ4OTY4ZGM2YzcwMTA4NTk3YTQ5ODc3ZWY0MzM4ZWEzNDA2OTU3YzgyIiwia2V5IjoiNTBpd3JvZ0JhQTVjNjhndGZldWc6RV9MSnhOdUxUY3lucXd5ZGFkbE1ZUSJ9", //3.bearer token
 
@@ -70,7 +72,7 @@ func GetClient8_2() *elasticsearch.Client {
 		//CertificateFingerprint: "",
 		//CertificateFingerprint: "fabfe5c3783a06514e72448d3d041e229a6d1afaeaa98fcbbd1bd35c76242767", //
 		//CertificateFingerprint: "3c2c7ca44a998b07a793b2863fe50f6ef9e94aa2b34d2ddaa38e7db20cf01929", //78
-		CertificateFingerprint: "2b3aac2d800e478d81e33a1d8968dc6c70108597a49877ef4338ea3406957c82", //224
+		//CertificateFingerprint: "2b3aac2d800e478d81e33a1d8968dc6c70108597a49877ef4338ea3406957c82", //224
 
 	}
 	esClient, err := elasticsearch.NewClient(cfg)
@@ -147,4 +149,23 @@ func GetFailed2(executionId int64, requests []elastic.BulkableRequest, response 
 			log.Printf("DebugFailedEs: index:%s type:%s id:%s version:%d  status:%d result:%s ForceRefresh:%v errorDetail:%v getResult:%v\n", f.Index, f.Type, f.Id, f.Version, f.Status, f.Result, f.ForcedRefresh, f.Error, f.GetResult)
 		}
 	}
+}
+
+func InsertVector8_2(es *elasticsearch.Client, index string, size int) {
+
+	log.Println("Indexing the documents...")
+	for i := 1; i <= size; i++ {
+
+		val := GetInsertValue(i, 256)
+		bytess, _ := json.Marshal(val)
+		//body := string(bytess)
+		res, err := es.Index(
+			index, bytes.NewReader(bytess),
+			es.Index.WithDocumentID(strconv.Itoa(i)),
+		)
+		if err != nil || res.IsError() {
+			log.Fatalf("Error: %s: %s", err, res)
+		}
+	}
+	es.Indices.Refresh(es.Indices.Refresh.WithIndex(index))
 }

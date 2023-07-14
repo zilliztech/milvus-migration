@@ -20,7 +20,8 @@ func main() {
 	esClient := getClientByCloudId()
 	fmt.Println(esClient)
 
-	var index = "test_mul_field"
+	//var index = "test_mul_field"
+	var index = "test_elastic"
 
 	// Index 100 documents into the "test-scroll" index
 	//insertVector(esClient)

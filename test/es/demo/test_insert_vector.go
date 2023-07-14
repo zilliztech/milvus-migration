@@ -36,8 +36,8 @@ func main() {
 	//Info(index, esClient)
 	//Mapping(index, esClient)
 
-	var index2 = "test-vector3"
-	insertVector2(esClient, index2, 10000)
+	var index2 = "test-vector_224"
+	insertVector2(esClient, index2, 50000)
 }
 
 func insertVector2(es *elasticsearch.Client, index string, size int) {
@@ -56,7 +56,7 @@ func insertVector2(es *elasticsearch.Client, index string, size int) {
 			log.Fatalf("Error: %s: %s", err, res)
 		}
 	}
-	es.Indices.Refresh(es.Indices.Refresh.WithIndex("test-vector"))
+	es.Indices.Refresh(es.Indices.Refresh.WithIndex(index))
 }
 
 func insertVector(es *elasticsearch.Client) {

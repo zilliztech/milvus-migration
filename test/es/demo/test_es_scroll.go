@@ -60,10 +60,12 @@ func getClient() *elasticsearch.Client {
 	//cert, _ := os.ReadFile("/xxx/x")
 
 	cfg := elasticsearch.Config{
-		Addresses: []string{"http://localhost:9200"},
+		//Addresses: []string{"http://localhost:9200"},
 		//Addresses: []string{"http://10.15.9.78:9700"},
-		//Username:  "xx", //1
-		//Password:  "xx",
+		Addresses:              []string{"http://10.15.:9700"},
+		Username:               "elastic", //1
+		Password:               "elastic",
+		CertificateFingerprint: "2b3aac2d800e478d81e33a1d8968dc6c70108597a49877ef4338ea3406957c82",
 		//
 		//CACert: cert, //2:custom certificate authority
 		//
