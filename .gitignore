@@ -8,3 +8,4 @@ migration.log
 configs/
 
 dist/
+test/
