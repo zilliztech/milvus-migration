@@ -56,5 +56,5 @@ func init() {
 	//./milvus-migration load --config=/Users/zilliz/gitCode/cloud_team/milvus-migration/configs/migration_targetMinio.yaml
 	loadCmd.Flags().StringVarP(&loadCollectionNames, "col", "", "", "collectionNames to load, use ',' to connect multiple collections")
 
-	rootCmd.AddCommand(loadCmd)
+	RootCmd.AddCommand(loadCmd)
 }

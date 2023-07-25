@@ -54,5 +54,5 @@ func handlePanic(_any any, jobId string) {
 
 func init() {
 	// ./milvus-migration start --config=/Users/zilliz/gitCode/cloud_team/milvus-migration/configs/migration_targetMinio.yaml
-	rootCmd.AddCommand(startCmd)
+	RootCmd.AddCommand(startCmd)
 }

@@ -11,7 +11,7 @@ var (
 	configFile string
 )
 
-var rootCmd = &cobra.Command{
+var RootCmd = &cobra.Command{
 	Use:   "milvus-migration",
 	Short: "milvus-migration is a migration tool for milvus.",
 	Long:  `milvus-migration is a migration tool for milvus.`,
@@ -21,9 +21,9 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config YAML file of server")
+	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config YAML file of server")
 
-	rootCmd.Execute()
+	RootCmd.Execute()
 }
 
 func Error(cmd *cobra.Command, args []string, err error) {

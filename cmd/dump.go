@@ -64,5 +64,5 @@ func init() {
 	// ./milvus-migration dump --config=/Users/zilliz/gitCode/cloud_team/milvus-migration/configs/migration_targetMinio.yaml
 	dumpCmd.Flags().StringVarP(&dumpCollectionNames, "col", "", "", "collectionNames to dump, use ',' to connect multiple collections")
 
-	rootCmd.AddCommand(dumpCmd)
+	RootCmd.AddCommand(dumpCmd)
 }
