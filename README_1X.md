@@ -11,16 +11,16 @@ use sqlite storage Milvus 0.9.x ~ 1.x collection meta data.
 ```yaml
 dumper:
   worker:
-    limit: 20
+    limit: 20           # Number of collections allowed for concurrent dumping
     workMode: milvus1x
     reader:
-      bufferSize: 1024 # unit is KB
+      bufferSize: 1024  # read data buffer size,  unit is KB
     writer:
-      bufferSize: 1024 # unit is KB
+      bufferSize: 1024 # write data buffer size, unit is KB
 
 loader:
   worker:
-    limit: 20
+    limit: 20   # Number of collections allowed for concurrent loading
 
 meta:
   mode: sqlite    # mode set sqlite will get meta info from sqlite
@@ -29,7 +29,7 @@ meta:
 source:
   mode: local   # source mode can set local or remote(s3,minio,gcp,ali-oss)
   local:
-    tablesDir: /db/tables/
+    tablesDir: /db/tables/  #milvus1.x data directory path
 
 target:
   mode: remote  
@@ -39,12 +39,12 @@ target:
     cloud: aws
     endpoint: 127.0.0.1:9000
     region: ap-southeast-1
-    bucket: a-bucket
+    bucket: a-bucket    # bucket name, need same with milvus2.x bucket name
     ak: minioadmin
     sk: minioadmin
     useIAM: false
     useSSL: false
-    checkBucket: true
+    checkBucket: true   #if bucket not exits will create bucket when set checkBucket=true
 
   milvus2x: # milvus2x connect info
     endpoint: xxxxxx:19530
@@ -67,6 +67,19 @@ source:
 ...
 ```
 
+if your target is s3 , the config maybe like:
+```yaml
+target:
+  mode: remote
+  remote:
+    outputDir: "migration/test/xxx"
+    cloud: aws
+    region: { yourRegion }
+    bucket: { yourBucket }
+    useIAM: true      #use IAM connect s3, don't need ak/sk
+    checkBucket: false
+    useSSL: true
+```
 
 ### Migrate milvus 0.9.x ~ 1.x(mysql) to Milvus 2.x
 

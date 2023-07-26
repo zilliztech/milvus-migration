@@ -34,42 +34,47 @@ Tool will migration ES index data to Milvus2.x Collection. Now support migration
 ```yaml
 dumper:
   worker:
-    workMode: elasticsearch
+    workMode: elasticsearch   # migration mode: elasticsearch, faiss, milvus1x
     reader:
-      bufferSize: 2500
+      bufferSize: 2500      # es data total rows in each time read from es.  
 meta:
-  mode: config
-  index: test_es_index
-  fields:
-    - name: id
+  mode: config            #config: will read meta config from this config itself.
+  index: test_es_index    #es index 
+  fields:                 # es index fields of need migrate to milvus2x 
+    - name: id            #field name
       type: long
-      pk: true
+      pk: true            #set pk=true will use this field as milvus collection primary key 
     - name: data
-      type: dense_vector
-      dims: 512
+      type: dense_vector  #dense_vector field have to migrate field.
+      dims: 512           #vector dims
     - name: other_field
       type: keyword
-      maxLen: 60
-  milvus:
-    collection: rename_test_name
+      maxLen: 60          #as milvus collection Varchar type filed maxLen property.
+  milvus:               #optional configuration
+    collection: rename_test_name  #if not exits, will use es index as collection name. 
     closeDynamicField: false
     shardNum: 2
     consistencyLevel: Customized
-source:
+source:               # es connect configuration
   es:
     urls:
       - http://localhost:9200
-    username: xxx
-    password: xxx
+    username: x*****x
+    password: x*****x
 target:
   mode: remote
   remote:
-    outputDir: migration/test/xx
-    cloud: aws
-    region: us-west-2
-    bucket: xxxxxxxxxx
-    useIAM: true
-    checkBucket: false
+    outputDir: migration/test/xx   # temp storage source data, cannot start with '/'
+    cloud: aws                    #cloud includes: aws(s3,minio), gcp, ali(oss)
+    endpoint: localhost:9000     # here is the minio server endpoint 
+    region: ap-southeast-1       # region, if local server needn't it
+    bucket: a-bucket      # bucket name, need same with milvus2.x bucket name
+    ak: minioadmin        # ak/sk, if useIAM=false, need ak/sk
+    sk: minioadmin
+    useIAM: false         #if useIAM=true, not need ak/sk. 
+    useSSL: false
+    checkBucket: true     #if bucket not exits will create bucket when set checkBucket=true  
+    
   milvus2x:
     endpoint: localhost:19530
     username: xxxxx
@@ -105,9 +110,9 @@ if you want to verify the migration data result, you can use Attu see your new c
 ...
 meta:
   fields:
-    - name: _id      --- explicit _id as primary key a field  
-      type: keyword  --- primary key type specified `keyword` type
-      maxLen: 60     --- primary key maxLen set 60
+    - name: _id      # explicit _id as primary key a field  
+      type: keyword  # primary key type specified `keyword` type
+      maxLen: 60     # primary key maxLen set 60
       pk: true
 ...
 ```
@@ -117,7 +122,7 @@ also you can change type to long
 meta:
   fields:
     - name: _id
-      type: long  --- primary key type specified `long` type
+      type: long  # primary key type specified `long` type
       pk: true
 ...
 ```
@@ -126,8 +131,8 @@ meta:
 ...
 source:  
    es:
-      cloudId: xxx
-      apiKey:  xxx
+      cloudId: x*********x
+      apiKey:  x*******x
 ...
 ```
 - if your es server setting others auth style, like: serviceToken, fingerprint, ca file, you can add corresponding authorization config:
@@ -135,9 +140,9 @@ source:
 ...
 source:  
    es:
-      fingerprint: xxxxxx
-      serviceToken:  xxxxxx
-      cert:  /xxx/http_ca.cert
+      fingerprint: x********x
+      serviceToken:  x******x
+      cert:  /{YourPath}/http_ca.cert
 ...
 ```
 - About target, if you use aliyun-oss, your config will like below:
@@ -146,12 +151,24 @@ target:
   mode: remote
   remote:
     outputDir: "migration/test/xxx"
-    ak: xxxx
-    sk: xxxx
-    cloud: ali    --- cloud set is ali
-    region: xxxxxx
-    bucket: xxxxxx
-    useIAM: true
+    cloud: ali    # cloud set is ali
+    endpoint: oss-{YourRegion}-internal.aliyuncs.com  # if dont set oss endpoint default is: oss.aliyuncs.com
+    region: { yourRegion }
+    bucket: { yourBucket }
+    useIAM: true    #useIAM=true, don't need ak/sk
+    checkBucket: false
+    useSSL: true
+```
+or if you are use s3:
+```yaml
+target:
+  mode: remote
+  remote:
+    outputDir: "migration/test/xxx"
+    cloud: aws
+    region: { yourRegion }
+    bucket: { yourBucket }
+    useIAM: true      #use IAM connect s3
     checkBucket: false
     useSSL: true
 ```

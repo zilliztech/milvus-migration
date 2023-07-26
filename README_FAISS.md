@@ -51,7 +51,7 @@ target:
     collection:
       name: test
       shardsNum: 2
-      dim: 512
+      dim: 256
       metricType: L2
 ```
 Place your migration.yaml to configs/ directory, then tool will auto read config from the configs/migration.yaml
