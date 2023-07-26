@@ -89,6 +89,18 @@ how to learn more about using migration tool, see examples doc below:
 3. faiss -> milvux2.x (
    Beta) : [migrate_faiss_doc](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/README_FAISS.md).
 
+## How to verify migration result
+When migration finished, you can use visual tool `Attu` or use Milvus SDK verify your new collection data rows.
+
+- [Attu](https://github.com/zilliztech/attu)
+- [Milvus SDK - Get Rows](https://milvus.io/api-reference/java/v2.2.x/Collection/getCollectionStatistics().md)
+
+## Build Index and search
+After the Milvus collection Data migration is completed, we can use SDK or `Attu` to create index and load collection for the next search operation.
+- [SDK - build index](https://milvus.io/docs/build_index.md)
+- [SDK - load collection](https://milvus.io/docs/load_collection.md)
+- [SDK - vector search](https://milvus.io/api-reference/java/v2.2.x/Query%20and%20Search/search().md)
+   
 ## Future work
 
 - [ ] Mivlus 2.x to Milvus 2.x
