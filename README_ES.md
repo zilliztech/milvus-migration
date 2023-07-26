@@ -100,12 +100,12 @@ if you want to verify the migration data result, you can use Attu see your new c
 
 ## Other introduce
 - if you don't config pk=true field, default will use es `_id` as primary key, pk type is Varchar and maxLen is 65535. 
-  Usually, this is not a good pk attribute, so provide you explicit setting like below config:
+  Usually, this is not a good pk strategy, so here provide to explicit setting like below config:
 ```yaml
 ...
 meta:
   fields:
-    - name: _id
+    - name: _id      --- explicit _id as primary key a field  
       type: keyword  --- primary key type specified `keyword` type
       maxLen: 60     --- primary key maxLen set 60
       pk: true
@@ -130,7 +130,7 @@ source:
       apiKey:  xxx
 ...
 ```
-- if your es server setting others auth style, like: serviceToken, fingerprint, ca file, you can set corresponding authorization config:
+- if your es server setting others auth style, like: serviceToken, fingerprint, ca file, you can add corresponding authorization config:
 ```yaml
 ...
 source:  
