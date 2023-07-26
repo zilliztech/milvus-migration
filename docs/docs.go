@@ -151,6 +151,43 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/start": {
+            "post": {
+                "description": "migration start",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Migration"
+                ],
+                "summary": "migration start",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "RequestId",
+                        "name": "RequestId",
+                        "in": "header"
+                    },
+                    {
+                        "description": "param",
+                        "name": "object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.StartParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -182,6 +219,17 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "requestId": {
+                    "type": "string"
+                }
+            }
+        },
+        "param.StartParam": {
+            "type": "object",
+            "properties": {
+                "async": {
+                    "type": "boolean"
                 },
                 "requestId": {
                     "type": "string"
