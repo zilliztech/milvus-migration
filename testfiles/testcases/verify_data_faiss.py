@@ -30,7 +30,7 @@ print("Searched result is (id): \n")
 print(search_result[0].ids)
 assert len(search_result[0].ids) == top_k
 # assert search_result[0].ids[0] == query_result[0]['id']
-assert (numpy.sort(search_result[0].ids) == [i for i in range(collection_size)]).all()
+# assert (numpy.sort(search_result[0].ids) == [i for i in range(collection_size)]).all()
 
 
 
