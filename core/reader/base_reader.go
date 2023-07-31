@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"github.com/zilliztech/milvus-migration/core/check"
 	"github.com/zilliztech/milvus-migration/core/common"
-	"github.com/zilliztech/milvus-migration/core/convert"
+	"github.com/zilliztech/milvus-migration/core/transform/numpy"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"io"
@@ -16,9 +16,14 @@ const defaultKBSize = 1024
 
 const oneKB = 1024
 
+type PublishResponse struct {
+	NoData         bool //本次生成文件是否有数据
+	RemainData     bool //还有剩余数据没读取完
+	FinishDataRows int
+}
 type Publisher interface {
 	BeforePublish() error
-	PublishTo(w io.Writer) error
+	PublishTo(w io.Writer) (error, *PublishResponse)
 	AfterPublish() error
 }
 
@@ -175,7 +180,7 @@ func (this *BaseReader) skipKByte(num int) {
 }
 
 func (this *BaseReader) convertHead() ([]byte, error) {
-	return convert.ConvertToNumpyHead(this.head)
+	return npconvert.ConvertToNumpyHead(this.head)
 }
 
 func (this *BaseReader) SetReadSources(source ReadSource, deleteSource ReadSource) {
@@ -223,7 +228,7 @@ func NewBaseReader(fileParam common.FileParam, bufSize int) *BaseReader {
 		byte1:     make([]byte, 1),
 		byte4:     make([]byte, 4),
 		byte8:     make([]byte, 8),
-		order:     binary.LittleEndian,
+		order:     binary.LittleEndian, //serialize byte order
 		fileParam: fileParam,
 		bufSize:   bufSize * oneKB,
 	}

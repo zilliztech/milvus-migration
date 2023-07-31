@@ -1,4 +1,3 @@
-basePath: /api/v1
 definitions:
   param.DumpParam:
     properties:
@@ -22,13 +21,15 @@ definitions:
       requestId:
         type: string
     type: object
+  param.StartParam:
+    properties:
+      async:
+        type: boolean
+      requestId:
+        type: string
+    type: object
 info:
   contact: {}
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: Migration Swagger API
-  version: "1.0"
 paths:
   /dump:
     post:
@@ -117,6 +118,30 @@ paths:
           schema:
             type: string
       summary: migration load
+      tags:
+      - Migration
+  /start:
+    post:
+      description: migration start
+      parameters:
+      - description: RequestId
+        in: header
+        name: RequestId
+        type: string
+      - description: param
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/param.StartParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: migration start
       tags:
       - Migration
 swagger: "2.0"

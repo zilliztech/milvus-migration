@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/viper"
 	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"hash/fnv"
@@ -10,6 +11,7 @@ import (
 	"sync/atomic"
 )
 
+// MigrationConfig : struct for store the resolved  migration.yaml file config
 type MigrationConfig struct {
 
 	// meta config
@@ -20,6 +22,7 @@ type MigrationConfig struct {
 	SourceTablesDir string
 	SourceRemote    *RemoteConfig
 	SourceFaissFile string
+	SourceESConfig  *ESConfig
 
 	// target
 	TargetMode      string
@@ -40,6 +43,24 @@ type MigrationConfig struct {
 
 	// runtime store config
 	RuntimeStore *RuntimeStore
+}
+
+type ESConfig struct {
+	//Security    string   // cert  #non, cert, password, fingerPrint,
+
+	CloudId string
+	ApiKey  string
+
+	Urls        []string //http://localhost:9200,http://localhost:9201
+	Username    string
+	Password    string
+	Cert        string // /local/certificates/ca/ca.crt
+	FingerPrint string //: "xxxxxxx...."
+
+	ServiceToken string
+
+	Version   string //internal param
+	hashCache atomic.Uint32
 }
 
 type Milvus1xConfig struct {
@@ -72,10 +93,14 @@ type MetaConfig struct {
 
 	// remote meta
 	RemoteMetaFile string
+
+	EsMeta *estype.MetaJSON
 }
 
 type DumperWorkConfig struct {
+	//common.Faiss, common.Milvus1x, common.Elasticsearch:
 	WorkMode         string
+	Limit            int
 	ReaderBufferSize int
 	WriterBufferSize int
 
@@ -90,13 +115,19 @@ type LoaderWorkConfig struct {
 }
 
 type ReadConfig struct {
-	ReadMode     string
-	ReaderType   string
-	BufSize      int // 1024 * 1024
+	ReadMode     string //local, remote
+	ReaderType   string //common.ES, RV, UID, FAISS_ID, FAISS_DATA
+	BufSize      int    // 1024 * 1024
 	Dim          int
 	RemoteConfig *RemoteConfig
-	FileParam    *common.FileParam
-	DeleteFile   *common.FileParam
+	//read data from file param
+	FileParam  *common.FileParam
+	DeleteFile *common.FileParam
+
+	//read data from es connection config
+	//ESConfig *ESConfig
+	//ESIdxCfg *estype.IdxCfg
+	//ESSource *source.ESSource
 }
 
 type WriteConfig struct {
@@ -121,12 +152,28 @@ type RemoteConfig struct {
 	hashCache atomic.Uint32
 }
 
+func (r *ESConfig) Hash() uint32 {
+
+	cache := r.hashCache.Load()
+	if cache != 0 {
+		return cache
+	}
+	hashCode := getHashCode(r)
+	r.hashCache.Store(hashCode)
+	return hashCode
+}
+
 func (r *RemoteConfig) Hash() uint32 {
 	cache := r.hashCache.Load()
 	if r.hashCache.Load() != 0 {
 		return cache
 	}
+	hashCode := getHashCode(r)
+	r.hashCache.Store(hashCode)
+	return hashCode
+}
 
+func getHashCode(r interface{}) uint32 {
 	h := fnv.New32()
 	val := reflect.ValueOf(r).Elem()
 	for i := 0; i < val.NumField(); i++ {
@@ -148,7 +195,6 @@ func (r *RemoteConfig) Hash() uint32 {
 	}
 
 	hashCode := h.Sum32()
-	r.hashCache.Store(hashCode)
 	return hashCode
 }
 

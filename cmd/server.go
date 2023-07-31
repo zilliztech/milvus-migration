@@ -28,5 +28,5 @@ var serverCmd = &cobra.Command{
 func init() {
 	serverCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to listen")
 
-	rootCmd.AddCommand(serverCmd)
+	RootCmd.AddCommand(serverCmd)
 }

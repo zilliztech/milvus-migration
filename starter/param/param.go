@@ -11,3 +11,8 @@ type LoadParam struct {
 	RequestId   string   `json:"requestId"`
 	Async       bool     `json:"async"`
 }
+
+type StartParam struct {
+	RequestId string `json:"requestId"`
+	Async     bool   `json:"async"`
+}

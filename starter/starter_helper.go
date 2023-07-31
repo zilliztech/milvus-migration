@@ -1,6 +1,7 @@
 package starter
 
 import (
+	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -20,4 +21,15 @@ func stepConfig(configFile string) (*config.MigrationConfig, error) {
 	}
 
 	return config.ResolveInsConfig(viper)
+}
+
+func stepFilterCols(migrationCfg *config.MigrationConfig, collections []string) {
+	//ES not support filter cols, bcz es7 above version index only support one type or not support type
+	if common.DumpMode(migrationCfg.DumperWorkCfg.WorkMode) == common.Elasticsearch {
+		return
+	}
+	if collections != nil {
+		migrationCfg.FilterCols = collections
+	}
+
 }

@@ -9,15 +9,18 @@ import (
 	"github.com/zilliztech/milvus-migration/internal/log"
 )
 
-func newReader(cfg *config.ReadConfig) (reader.Publisher, error) {
+// create worker reader
+func newReader(cfg *config.ReadConfig, channel *source.ChannelSource) (reader.Publisher, error) {
 	switch cfg.ReaderType {
-	case "rv":
+	case common.ES:
+		return newESReader(channel.ESSource)
+	case common.RV:
 		return newRVReader(cfg)
-	case "uid":
+	case common.UID:
 		return newUIDReader(cfg)
-	case "faiss-id":
+	case common.FAISS_ID:
 		return newFaissIdReader(cfg)
-	case "faiss-data":
+	case common.FAISS_DATA:
 		return newFaissDataReader(cfg)
 	default:
 		return nil, fmt.Errorf("not support reader type: %s", cfg.ReaderType)
@@ -30,6 +33,7 @@ func newFaissIdReader(cfg *config.ReadConfig) (reader.Publisher, error) {
 	if err != nil {
 		return nil, err
 	}
+	//set readSource on Reader
 	idReader.SetReadSources(readSource)
 	return idReader, nil
 }
@@ -42,6 +46,12 @@ func newFaissDataReader(cfg *config.ReadConfig) (reader.Publisher, error) {
 	}
 	idReader.SetReadSources(readSource)
 	return idReader, nil
+}
+
+func newESReader(esSource *source.ESSource) (reader.Publisher, error) {
+	//esReadSource := source.NewESSource(cfg) //this method if error will panic
+	esReader := reader.NewESReader(esSource)
+	return esReader, nil
 }
 
 func newRVReader(cfg *config.ReadConfig) (reader.Publisher, error) {
@@ -77,11 +87,12 @@ func newUIDReader(cfg *config.ReadConfig) (reader.Publisher, error) {
 }
 
 func newReadSource(cfg *config.ReadConfig, fileParam *common.FileParam) (reader.ReadSource, error) {
+
 	var rdSource reader.ReadSource
-	switch cfg.ReadMode {
-	case "local":
+	switch common.SourceMode(cfg.ReadMode) {
+	case common.S_Local:
 		rdSource = source.NewLocalFileSource(fileParam)
-	case "remote":
+	case common.S_Remote:
 		rdSource = source.NewRemoteSource(fileParam, cfg.RemoteConfig)
 	default:
 		err := fmt.Errorf("not support read mode: %s", cfg.ReadMode)

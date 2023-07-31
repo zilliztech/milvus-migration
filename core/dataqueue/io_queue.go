@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	oneKB         = 1024
-	defaultMBSize = 4
+	oneKB = 1024
+	//defaultMBSize = 4
+	defaultKBSize = 40
 )
 
 type IOQueue struct {
@@ -17,7 +18,7 @@ type IOQueue struct {
 }
 
 func NewIOQueue() *IOQueue {
-	return NewIOQueueSize(oneKB * defaultMBSize)
+	return NewIOQueueSize(oneKB * defaultKBSize)
 }
 
 func NewIOQueueSize(bufSize int) *IOQueue {

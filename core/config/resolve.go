@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/viper"
+	"github.com/zilliztech/milvus-migration/core/common"
 	"path/filepath"
 	"strings"
 )
@@ -12,12 +13,12 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 
 	dumpWrkLimit := v.GetInt("dumper.worker.limit")
 	if dumpWrkLimit <= 0 {
-		return nil, errors.New("[dumper.worker.limit] must > 0")
+		dumpWrkLimit = 2
 	}
 
 	loadWrkLimit := v.GetInt("loader.worker.limit")
 	if loadWrkLimit <= 0 {
-		return nil, errors.New("[loader.worker.limit] must > 0")
+		loadWrkLimit = 2
 	}
 
 	// first get workMode
@@ -26,7 +27,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		return nil, err
 	}
 
-	sourceMode, err := assertSourceMode(v)
+	sourceMode, err := assertSourceMode(v, dumperWorkMode)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		return nil, err
 	}
 
-	dumpWorkCfg, err := resolveDumpWorkConfig(v)
+	dumpWorkCfg, err := resolveDumpWorkConfig(v, dumpWrkLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -69,25 +70,33 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		LoaderWorkCfg:   loadWorkCfg,
 	}
 
-	if dumperWorkMode == "faiss" {
+	switch common.DumpMode(dumperWorkMode) {
+	case common.Faiss:
 		sourceFaissFile, err := getFaissFileBySourceMode(sourceMode, v)
 		if err != nil {
 			return nil, err
 		}
 		cfg.SourceFaissFile = sourceFaissFile
-	}
-
-	if dumperWorkMode == "milvus1x" {
+	case common.Milvus1x:
 		sourceTablesDir, err := getTableDirBySourceMode(sourceMode, v)
 		if err != nil {
 			return nil, err
 		}
-		metaConfig, err := resolveMetaConfig(v)
+		metaConfig, err := resolveMetaConfig(v, common.Milvus1x)
 		if err != nil {
 			return nil, err
 		}
 		cfg.MetaConfig = metaConfig
 		cfg.SourceTablesDir = sourceTablesDir
+	case common.Elasticsearch:
+		cfg.SourceESConfig, err = getSourceESConfig(v)
+		if err != nil {
+			return nil, err
+		}
+		cfg.MetaConfig, err = resolveMetaConfig(v, common.Elasticsearch)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &cfg, nil
@@ -95,8 +104,8 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 
 func assertTargetMode(v *viper.Viper) (string, error) {
 	mode := v.GetString("target.mode")
-	switch mode {
-	case "local", "remote":
+	switch common.TargetMode(mode) {
+	case common.T_REMOTE, common.T_LOCAL:
 		return mode, nil
 	default:
 		return "", fmt.Errorf("not support [target.mode], %s", mode)
@@ -157,10 +166,16 @@ func getOutputDirByRemote(v *viper.Viper) string {
 	return strings.TrimPrefix(outputDir, "/")
 }
 
-func assertSourceMode(v *viper.Viper) (string, error) {
+func assertSourceMode(v *viper.Viper, dumperWorkMode string) (string, error) {
+
+	if common.DumpMode(dumperWorkMode) == common.Elasticsearch {
+		//es not need source mode param
+		return common.EMPTY, nil
+	}
+
 	mode := v.GetString("source.mode")
-	switch mode {
-	case "local", "remote":
+	switch common.SourceMode(mode) {
+	case common.S_Local, common.S_Remote:
 		return mode, nil
 	default:
 		return "", fmt.Errorf("not support [source.mode], %s", mode)
@@ -197,16 +212,20 @@ func resolveMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
 	}
 }
 
-func resolveDumpWorkConfig(v *viper.Viper) (*DumperWorkConfig, error) {
+func resolveDumpWorkConfig(v *viper.Viper, limit int) (*DumperWorkConfig, error) {
 	workMode, err := resolveWorkMode(v)
 	if err != nil {
 		return nil, err
 	}
-
+	var writerBufferSize = v.GetInt("dumper.worker.writer.bufferSize")
+	if writerBufferSize <= 0 {
+		writerBufferSize = 1048576
+	}
 	return &DumperWorkConfig{
 		WorkMode:         workMode,
+		Limit:            limit,
 		ReaderBufferSize: v.GetInt("dumper.worker.reader.bufferSize"),
-		WriterBufferSize: v.GetInt("dumper.worker.writer.bufferSize"),
+		WriterBufferSize: writerBufferSize,
 	}, nil
 }
 
@@ -236,7 +255,8 @@ func resolveCreatColMode(workMode string, v *viper.Viper) (*CollectionConfig, er
 	}
 
 	// fast return
-	if workMode == "milvus1x" {
+	mode := common.DumpMode(workMode)
+	if mode == common.Milvus1x || mode == common.Elasticsearch {
 		return colCfg, nil
 	}
 
@@ -262,8 +282,8 @@ func resolveCreatColMode(workMode string, v *viper.Viper) (*CollectionConfig, er
 func resolveWorkMode(v *viper.Viper) (string, error) {
 	workMode := v.GetString("dumper.worker.workMode")
 
-	switch workMode {
-	case "milvus1x", "faiss":
+	switch common.DumpMode(workMode) {
+	case common.Faiss, common.Milvus1x, common.Elasticsearch:
 		break
 	default:
 		return "", errors.New("[dumper.worker.workMode] not support " + workMode)

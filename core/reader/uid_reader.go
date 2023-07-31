@@ -95,8 +95,10 @@ func (this *UIDReader) AfterPublish() error {
 	}
 	return nil
 }
-
-func (this *UIDReader) PublishTo(w io.Writer) error {
+func (this *UIDReader) PublishTo(w io.Writer) (error, *PublishResponse) {
+	return this.publishTo(w), nil
+}
+func (this *UIDReader) publishTo(w io.Writer) error {
 	defer log.Info("[UIDReader] write file success", zap.String("file", this.FileFullName()))
 
 	// read delete info

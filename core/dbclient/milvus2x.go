@@ -43,7 +43,7 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 		milvus, err = client.NewDefaultGrpcClientWithURI(ctx, cfg.Endpoint, cfg.UserName, cfg.Password)
 	}
 	if err != nil {
-		log.Error("[Milvus2x] new milvus client error")
+		log.Error("[Milvus2x] new milvus client error", zap.Error(err))
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (this *Milvus2x) createCollection(ctx context.Context, createParam *common.
 	// schema
 	schema := &entity.Schema{
 		CollectionName: createParam.CollectionName,
-		Description:    "migration by vdm",
+		Description:    "Migration from Milvus1.x",
 		AutoID:         false,
 		Fields: []*entity.Field{
 			{
@@ -117,6 +117,7 @@ func (this *Milvus2x) StartBulkLoad(ctx context.Context, colName string, fullFil
 	taskId, err := this.milvus.BulkInsert(ctx, colName, "", fullFilePaths)
 
 	if err != nil {
+		log.L().Info("[Loader] BulkInsert return err", zap.Error(err))
 		return 0, err
 	}
 
@@ -168,7 +169,16 @@ func (this *Milvus2x) GetCollectionRowCount(ctx context.Context, colName string)
 
 func (this *Milvus2x) CheckBulkLoadState(ctx context.Context, taskId int64) error {
 	status, err := this.GetBulkLoadStatus(ctx, taskId)
-	log.LL(ctx).Info("[Loader] Check bulkInsert", zap.Any("status", status), zap.Int64("taskId", taskId))
+	if err != nil {
+		log.LL(ctx).Error("[Loader] Check Milvus bulkInsertState Error", zap.Error(err))
+		return err
+	}
+	log.LL(ctx).Info("[Loader] Check Milvus bulkInsertState", zap.Int("progress", status.Progress()),
+		zap.Int64("taskId", taskId))
+
+	if common.DEBUG {
+		log.LL(ctx).Info("[Loader] Check Milvus bulkInsertState", zap.Any("status", status), zap.Int64("taskId", taskId))
+	}
 	switch status.State {
 	case entity.BulkInsertCompleted:
 		return nil

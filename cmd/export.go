@@ -52,5 +52,5 @@ func init() {
 	exportCmd.Flags().StringVarP(&mysqlURL, "mysql", "m", "", "")
 	exportCmd.Flags().StringVarP(&metaOutPutDir, "output", "o", "", "meta json output dir")
 
-	rootCmd.AddCommand(exportCmd)
+	RootCmd.AddCommand(exportCmd)
 }

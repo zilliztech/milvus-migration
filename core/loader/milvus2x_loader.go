@@ -28,9 +28,13 @@ type Milvus2xLoader struct {
 	// collection info
 	runtimeCollectionNames []string
 	runtimeCollectionRows  map[string]int
-	runtimeCollections     []common.CollectionParam
-	// key is colName + segName
+
+	runtimeCollections []common.CollectionParam
+	// key is colName + segName, or es indexName
 	runtimeFiles cmap.ConcurrentMap[string, []string]
+
+	//custom fields collection info
+	runtimeCusCollectionInfos []*common.CollectionInfo
 }
 
 func NewMilvus2xLoader(cfg *config.MigrationConfig, jobId string) (*Milvus2xLoader, error) {
@@ -69,17 +73,34 @@ func (this *Milvus2xLoader) doDump(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	gstore.SetTotalTasks(this.jobId, len(this.runtimeCollections))
+
+	this.setTotalTasks()
 
 	// load all
 	return this.loadAll(ctx)
+	//if common.DumpMode(this.workMode) == common.Elasticsearch {
+	//	//if es mode go to the new MultiField loader
+	//	return NewCusFieldMilvus2xLoader(this).loadAll(ctx)
+	//} else {
+	//	return this.loadAll(ctx)
+	//}
+}
+
+func (this *Milvus2xLoader) setTotalTasks() {
+	if common.DumpMode(this.workMode) == common.Elasticsearch {
+		gstore.SetTotalTasks(this.jobId, len(this.runtimeCusCollectionInfos))
+		return
+	}
+	gstore.SetTotalTasks(this.jobId, len(this.runtimeCollections))
 }
 
 func (this *Milvus2xLoader) loadRuntimeMetaByWorkMode(ctx context.Context) error {
-	switch this.workMode {
-	case "milvus1x":
+	switch common.DumpMode(this.workMode) {
+	//case common.Elasticsearch:
+	//return this.loadRuntimeMetaInESMode(ctx)
+	case common.Milvus1x:
 		return this.loadRuntimeMetaInMilvus1xMode(ctx)
-	case "faiss":
+	case common.Faiss:
 		return this.loadRuntimeMetaInFaissMode(ctx)
 	default:
 		return fmt.Errorf("not support workMode %s", this.workMode)

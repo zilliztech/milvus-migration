@@ -110,7 +110,10 @@ func (this *RVReader) AfterPublish() error {
 	return nil
 }
 
-func (this *RVReader) PublishTo(w io.Writer) error {
+func (this *RVReader) PublishTo(w io.Writer) (error, *PublishResponse) {
+	return this.publishTo(w), nil
+}
+func (this *RVReader) publishTo(w io.Writer) error {
 	defer log.Info("[RVReader] write file success", zap.String("file", this.FileFullName()))
 
 	// read delete info

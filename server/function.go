@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/util"
@@ -87,6 +88,57 @@ func handleGetJob(c *gin.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	info.CalculateJobProcess()
+	ph := gstore.GetProcessHandler(jobId)
+	if ph != nil {
+		info.JobProcess = ph.CalcProcess()
+	} else {
+		info.CalculateJobProcess()
+	}
 	return info, nil
+}
+
+// @Summary migration start
+// @Description migration start
+// @Tags Migration
+// @Param RequestId header string false "RequestId"
+// @Param object body param.StartParam true "param"
+// @Produce json
+// @Success 200 {object} string
+// @Router /start [post]
+func handleStart(c *gin.Context) (interface{}, error) {
+	var req param.StartParam
+	err := c.BindJSON(&req)
+	if err != nil {
+		return nil, err
+	}
+	jobId := util.GenerateUUID("start_")
+
+	defer func() {
+		if _any := recover(); _any != nil {
+			handlePanic(_any, jobId)
+			return
+		}
+	}()
+
+	if req.Async {
+		go starter.Start(log.NewContextWithRequestId(c.Request.Context()), "", jobId)
+		return param.NewJobResponse(jobId), nil
+	}
+
+	return param.NewJobResponse(jobId), starter.Start(c.Request.Context(), "", jobId)
+}
+
+func handlePanic(_any any, jobId string) {
+	var errMsg string
+	err, ok := _any.(error)
+	if ok {
+		errMsg = err.Error()
+	} else {
+		errMsg, _ = _any.(string)
+	}
+	if err == nil {
+		err = errors.New(errMsg)
+	}
+	fmt.Printf("Handle invoke Migration panic error! Job: %s , err: %s\n", jobId, errMsg)
+	gstore.RecordJobError(jobId, err)
 }
