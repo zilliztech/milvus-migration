@@ -21,7 +21,7 @@ exp = "id>0"
 query_result = collection.query(exp, output_fields=['id', 'data'])
 
 # 4. search
-top_k = 10000
+top_k = 100
 default_search_params = {"metric_type": "L2", "params": {"ef": 500}}
 search_result = collection.search([query_result[0]['data']], anns_field="data", param=default_search_params, limit=top_k)
 print("Search data is: \n")

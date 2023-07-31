@@ -54,7 +54,7 @@ func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collection
 	// schema
 	schema := &entity.Schema{
 		CollectionName:     collectionInfo.Param.CollectionName,
-		Description:        "milvus-migration",
+		Description:        "Migration from Elasticsearch",
 		AutoID:             false,
 		Fields:             collectionInfo.Fields,
 		EnableDynamicField: collectionInfo.Param.EnableDynamicField,

@@ -83,7 +83,7 @@ func (this *Milvus2x) createCollection(ctx context.Context, createParam *common.
 	// schema
 	schema := &entity.Schema{
 		CollectionName: createParam.CollectionName,
-		Description:    "migration by vdm",
+		Description:    "Migration from Milvus1.x",
 		AutoID:         false,
 		Fields: []*entity.Field{
 			{
