@@ -1,4 +1,4 @@
-name: Test on pull request
+name: Test (faiss2milvus2x) on pull request
 
 on:
   push:

@@ -1,0 +1,55 @@
+dumper:
+  worker:
+    workMode: elasticsearch
+    reader:
+      bufferSize: 2500
+meta:
+  mode: "config"
+  index: "test_es_index"
+  fields:
+    - name: "int64"
+      maxLen: 0
+      pk: true
+      type: "long"
+      dims: 0
+    - name: "string"
+      maxLen: 120
+      pk: false
+      type: "keyword"
+      dims: 0
+    - name: "vector"
+      maxLen: 0
+      pk: false
+      type: "dense_vector"
+      dims: 128
+  milvus:
+    collection: "test_es_collection"
+    closeDynamicField: false
+    shardNum: 0
+source:
+  es:
+    cloudId: ""
+    apiKey: ""
+    urls:
+      - "http://localhost:9200"
+    username: ""
+    password: ""
+    fingerprint: ""
+    serviceToken: ""
+target:
+  mode: remote
+  remote:
+    outputDir: testfiles/output/
+    cloud: aws
+    endpoint: 0.0.0.0:9000
+    region: us-west-2
+    bucket: a-bucket
+    ak: minioadmin
+    sk: minioadmin
+    useIAM: false
+    useSSL: false
+    checkBucket: true
+  milvus2x:
+    endpoint: localhost:19530
+    username: xxxxx
+    password: xxxxx
