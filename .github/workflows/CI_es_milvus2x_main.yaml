@@ -1,4 +1,4 @@
-name: Test (milvus1x2milvus2xconfig) on pull request
+name: Test (es2milvus2x) on pull request
 
 on:
   push:
@@ -38,13 +38,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-milvus-migration-cli-milvus1x-specify-config-main:
+  test-milvus-migration-cli-faiss-main:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         deploy_tools: [docker-compose]
-        milvus_2_x_mode: [standalone]
+        milvus_2_x_mode: [standalone, cluster]
     steps:
       - uses: actions/checkout@main
 
@@ -64,6 +64,33 @@ jobs:
         run: |
           go build
 
+      - name: Es deploy
+        timeout-minutes: 10
+        shell: bash
+        working-directory:
+        run: |
+          docker pull docker.elastic.co/elasticsearch/elasticsearch:7.17.12
+          docker run -d -p 127.0.0.1:9200:9200 -p 127.0.0.1:9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.17.12
+          docker ps
+
+      - name: Sleep for 60 seconds
+        shell: bash
+        run: |
+          sleep 60s
+          docker ps
+
+      - name: Install dependency
+        working-directory: testfiles
+        shell: bash
+        run: |
+          pip install -r requirements.txt
+
+      - name: Insert data to es
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python testfiles/es/prepare_data_es.py
+
       - name: Milvus 2.x deploy
         timeout-minutes: 10
         shell: bash
@@ -73,26 +100,19 @@ jobs:
           bash ../../scripts/check_healthy.sh
           docker-compose ps -a
 
-      - name: dump
-        timeout-minutes: 3
+      - name: Prepare config
         shell: bash
         run: |
-          ./milvus-migration dump -c ./testfiles/config/migration.yaml
+          cp testfiles/es/config/migration.yaml ./
 
-      - name: load
-        timeout-minutes: 3
+      - name: Migration
+        timeout-minutes: 5
         shell: bash
         run: |
-          ./milvus-migration load -c ./testfiles/config/migration.yaml
-
-      - name: Install dependency
-        working-directory: testfiles
-        shell: bash
-        run: |
-          pip install -r requirements.txt
+          ./milvus-migration start
 
       - name: Verify data
         timeout-minutes: 5
         shell: bash
         run: |
-          python testfiles/testcases/verify_data_milvus1x.py
+          python testfiles/testcases/verify_data_es.py
