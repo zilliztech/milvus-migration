@@ -52,6 +52,9 @@ func (this *DumperWorker) Work(ctx context.Context) error {
 
 func (this *DumperWorker) WorkWithResponse(ctx context.Context) (error, *reader.PublishResponse) {
 	err, response := this.pipeline4ReadAndWrite(ctx)
+	if err != nil {
+		return err, nil
+	}
 	// async to gc
 	go runtime.GC() // todo:  need GC ??
 	return err, response
