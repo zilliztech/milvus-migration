@@ -71,7 +71,8 @@ func (dp *Dumper) StreamDataInES(ctx context.Context, idxCfg *estype.IdxCfg) err
 
 	wokReadCfg := CloneWorkReadConfig(dp.cfg)
 	var g errgroup.Group
-	for number := 1; number <= common.DUMP_SUB_TASK_NUM; number++ {
+	//for number := 1; number <= common.DUMP_SUB_TASK_NUM; number++ {
+	for number := 1; number <= dp.concurLimit; number++ {
 		subNum := number
 		g.Go(func() error {
 			return dp.SubJsonDataInES(idxCfg, subNum, wokReadCfg, ctx, channel)

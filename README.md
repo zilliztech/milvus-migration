@@ -103,6 +103,6 @@ After the Milvus collection Data migration is completed, we can use SDK or `Attu
    
 ## Future work
 
-- [ ] Mivlus 2.x to Milvus 2.x
+- [ ] Milvus 2.x to Milvus 2.x
 - [ ] Support others datasource to Milvus 2.x
 - [ ] Supports binary vectors
