@@ -106,3 +106,6 @@ After the Milvus collection Data migration is completed, we can use SDK or `Attu
 - [ ] Milvus 2.x to Milvus 2.x
 - [ ] Support others datasource to Milvus 2.x
 - [ ] Supports binary vectors
+
+## Contributing
+Contributions to milvus-migration are welcome from everyone. See [Contributing](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/Contributing.md) for details of the contribution workflow.  
