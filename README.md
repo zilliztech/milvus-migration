@@ -85,9 +85,9 @@ how to learn more about using migration tool, see examples doc below:
 1. es ->
    milvux2.x : [migrate_es_doc](README_ES.md).
 2. milvus1.x ->
-   milvux2.x : [migrate_1.x_doc](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/README_1X.md).
+   milvux2.x : [migrate_1.x_doc](README_1X.md).
 3. faiss -> milvux2.x (
-   Beta) : [migrate_faiss_doc](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/README_FAISS.md).
+   Beta) : [migrate_faiss_doc](README_FAISS.md).
 
 ## How to verify migration result
 When migration finished, you can use visual tool `Attu` or use Milvus SDK verify your new collection data rows.
@@ -108,4 +108,4 @@ After the Milvus collection Data migration is completed, we can use SDK or `Attu
 - [ ] Supports binary vectors
 
 ## Contributing
-Contributions to milvus-migration are welcome from everyone. See [Contributing](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/Contributing.md) for details of the contribution workflow.  
+Contributions to milvus-migration are welcome from everyone. See [Contributing](Contributing.md) for details of the contribution workflow.  
