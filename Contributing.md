@@ -23,7 +23,7 @@
 - Pull a request to implement the MEP.
 
 If you want to become a contributor of Milvus-migration, submit your pull requests! For those just getting started, see `GitHub workflow` below.
-All submissions will be reviewed as quickly as possible.
+All submissions will be reviewed as quickly as possible. There will be a reviewer to review the codes, and an approver to review everything aside the codes. If everything is perfect, the reviewer will label /lgtm, and the approver will label /approve. Once the 2 labels are on your PR, and all actions pass, your PR will be merged into base branch automatically by our @sre-ci-robot
 
 ### GitHub workflow
 
@@ -71,12 +71,6 @@ We highly recommend you refer to and comply to the following style guides when y
 ### Golang coding style
 
 - Coding style: refer to the [Effictive Go Style Guide](https://golang.org/doc/effective_go)
-
-
-## Run unit test with code coverage
-
-Before submitting your Pull Request, make sure you have run unit test, and your code coverage rate is >= 90%.
-
 
 ## Commits and PRs
 

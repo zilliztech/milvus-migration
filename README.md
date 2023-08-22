@@ -83,7 +83,7 @@ Run the command `start` to migration es->2.x. here `start` == `dump && load` cmd
 how to learn more about using migration tool, see examples doc below:
 
 1. es ->
-   milvux2.x : [migrate_es_doc](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/README_ES.md).
+   milvux2.x : [migrate_es_doc](README_ES.md).
 2. milvus1.x ->
    milvux2.x : [migrate_1.x_doc](https://github.com/zilliztech/milvus-migration/blob/feature_es2milvus2x/README_1X.md).
 3. faiss -> milvux2.x (
