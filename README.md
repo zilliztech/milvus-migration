@@ -103,6 +103,8 @@ After the Milvus collection Data migration is completed, we can use SDK or `Attu
    
 ## Future work
 
+- [ ] Support Redis to Milvus 2.x
+- [ ] Support Mongodb to Milvus 2.x
 - [ ] Milvus 2.x to Milvus 2.x
 - [ ] Support others datasource to Milvus 2.x
 - [ ] Supports binary vectors
