@@ -28,8 +28,8 @@ func (starter *Starter) migrationES(ctx context.Context) error {
 
 func (starter *Starter) DumpLoadInES(ctx context.Context, idxCfgs []*estype.IdxCfg) error {
 
-	submitter := task.NewSubmitter(task.NewBaseLoadTasker(starter.Loader, starter.JobId),
-		task.NewESInitTasker(idxCfgs))
+	submitter := task.NewSubmitter(task.NewCusBaseLoadTasker(starter.Loader, starter.JobId),
+		task.NewESInitTasker(idxCfgs, starter.Loader))
 	//submitter： dump->load 大任务拆分小任务不断提交
 	starter.Dumper.Submitter = submitter
 

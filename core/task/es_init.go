@@ -8,20 +8,23 @@ import (
 
 type ESInitTasker struct {
 	IdxCfgs []*estype.IdxCfg
+	Loader  *loader.CustomMilvus2xLoader
 }
 
-func NewESInitTasker(idxCfgs []*estype.IdxCfg) *ESInitTasker {
+func NewESInitTasker(idxCfgs []*estype.IdxCfg, loader *loader.CustomMilvus2xLoader) *ESInitTasker {
 	return &ESInitTasker{
 		IdxCfgs: idxCfgs,
+		Loader:  loader,
 	}
 }
 
-func (initer ESInitTasker) Init(ctx context.Context, loader *loader.CustomMilvus2xLoader) error {
-	err := loader.InitCollectionInfoByES(initer.IdxCfgs)
+func (initer ESInitTasker) Init(ctx context.Context) error {
+
+	err := initer.Loader.InitCollectionInfoByES(initer.IdxCfgs)
 	if err != nil {
 		return err
 	}
-	err = loader.Before(ctx)
+	err = initer.Loader.Before(ctx)
 	if err != nil {
 		return err
 	}
