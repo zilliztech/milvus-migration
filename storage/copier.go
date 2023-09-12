@@ -45,9 +45,6 @@ type CopyOption struct {
 	RPS int32
 	// BufSizeByte the size of the buffer that the copier can use, default is 100MB
 	BufSizeByte int
-	// OnSuccess when an object copy success, this func will be call
-	// May be executed concurrently, please pay attention to thread safety
-	OnSuccess func(attr ObjectAttr)
 	// UseRemoteCopy Use the copy function of the dest client directly
 	UseRemoteCopy bool
 }
@@ -62,8 +59,6 @@ type Copier struct {
 	bufSizeBytePerWorker int
 	useRemoteCopy        bool
 	rps                  int32
-
-	onSuccess func(attr ObjectAttr)
 }
 
 func NewCopier(src, dest Client, opt CopyOption) *Copier {
@@ -82,9 +77,13 @@ func NewCopier(src, dest Client, opt CopyOption) *Copier {
 	}
 
 	return &Copier{src: src, dest: dest,
-		lim: lim, onSuccess: opt.OnSuccess, useRemoteCopy: opt.UseRemoteCopy,
-		workerNum: workerNum, bufSizeBytePerWorker: bufSizeBytePerWorker,
+		lim: lim, useRemoteCopy: opt.UseRemoteCopy, workerNum: workerNum, bufSizeBytePerWorker: bufSizeBytePerWorker,
 	}
+}
+
+type Total struct {
+	Length int64
+	Count  int64
 }
 
 type CopyPathInput struct {
@@ -93,41 +92,62 @@ type CopyPathInput struct {
 
 	DestBucket string
 	DestKeyFn  func(attr ObjectAttr) string
+
+	// OnSuccess when an object copy success, this func will be call
+	// May be executed concurrently, please pay attention to thread safety
+	OnSuccess func(attr ObjectAttr, total Total)
+}
+
+func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string) ([]ObjectAttr, Total, error) {
+	var attrs []ObjectAttr
+	var length int64
+	var count int64
+	p := c.src.ListObjectsPage(ctx, ListObjectPageInput{Bucket: bucket, Prefix: prefix})
+	for p.HasMorePages() {
+		page, err := p.NextPage(ctx)
+		if err != nil {
+			return nil, Total{}, fmt.Errorf("storage: copier list objects %w", err)
+		}
+		for _, attr := range page.Contents {
+			attrs = append(attrs, attr)
+			length += attr.Length
+			count++
+		}
+	}
+
+	return attrs, Total{Length: length, Count: count}, nil
 }
 
 // CopyPrefix Copy all files under src path
 func (c *Copier) CopyPrefix(ctx context.Context, i CopyPathInput) error {
-	p := c.src.ListObjectsPage(ctx, ListObjectPageInput{Bucket: i.SrcBucket, Prefix: i.SrcPrefix})
+	srcAttrs, total, err := c.getAttrs(ctx, i.SrcBucket, i.SrcPrefix)
+	if err != nil {
+		return fmt.Errorf("storage: copier get src attrs %w", err)
+	}
 
-	wp, err := NewWorkerPool(ctx, c.workerNum, c.rps)
+	wp, err := NewWorkerPool(ctx, c.workerNum, c.rps, 3)
 	if err != nil {
 		return fmt.Errorf("storage: copier new worker pool %w", err)
 	}
 	wp.Start()
-
 	fn := c.selectCopyFn()
-	for p.HasMorePages() {
-		page, err := p.NextPage(ctx)
-		if err != nil {
-			return fmt.Errorf("storage: copier list objects %w", err)
-		}
-
-		for _, attr := range page.Contents {
-			attr := attr
-			job := func(ctx context.Context) error {
-				destKey := i.DestKeyFn(attr)
+	for _, srcAttr := range srcAttrs {
+		attr := srcAttr
+		job := func(ctx context.Context) error {
+			destKey := i.DestKeyFn(attr)
+			destAttr, err := c.dest.HeadObject(ctx, i.DestBucket, destKey)
+			if err != nil || !attr.SameAs(destAttr) {
 				if err := fn(ctx, attr, destKey, i.SrcBucket, i.DestBucket); err != nil {
-					return fmt.Errorf("stroage: copy job %w", err)
+					return fmt.Errorf("storage: copier copy object %w", err)
 				}
-
-				if c.onSuccess != nil {
-					c.onSuccess(attr)
-				}
-
-				return nil
 			}
-			wp.Submit(job)
+			if i.OnSuccess != nil {
+				i.OnSuccess(attr, total)
+			}
+			return nil
 		}
+
+		wp.Submit(job)
 	}
 	wp.Done()
 
@@ -167,8 +187,8 @@ func (c *Copier) copyLocal(ctx context.Context, attr ObjectAttr, destKey, srcBuc
 	if c.lim != nil {
 		body = &limReader{r: body, lim: c.lim, ctx: ctx}
 	}
-	i := PutObjectInput{Body: body, Bucket: destBucket, Key: destKey, Length: obj.Length}
-	if err := c.dest.PutObject(ctx, i); err != nil {
+	i := UploadObjectInput{Body: body, Bucket: destBucket, Key: destKey, WorkerNum: 1}
+	if err := c.dest.UploadObject(ctx, i); err != nil {
 		return fmt.Errorf("storage: copier put object %w", err)
 	}
 
