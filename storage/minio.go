@@ -55,7 +55,7 @@ func (p *MinioListObjectPaginator) NextPage(_ context.Context) (*Page, error) {
 		if obj.Err != nil {
 			return nil, fmt.Errorf("storage: %s list objs %w", p.cli.provider, obj.Err)
 		}
-		contents = append(contents, ObjectAttr{Key: obj.Key, Length: obj.Size})
+		contents = append(contents, ObjectAttr{Key: obj.Key, Length: obj.Size, ETag: obj.ETag})
 		if len(contents) == int(p.pageSize) {
 			return &Page{Contents: contents}, nil
 		}
@@ -84,14 +84,6 @@ func (m *MinioClient) GetObject(ctx context.Context, i GetObjectInput) (*Object,
 		return nil, fmt.Errorf("storage: %s get object attr %w", m.provider, err)
 	}
 	return &Object{Length: attr.Size, Body: obj}, nil
-}
-
-func (m *MinioClient) PutObject(ctx context.Context, i PutObjectInput) error {
-	if _, err := m.cli.PutObject(ctx, i.Bucket, i.Key, i.Body, i.Length, minio.PutObjectOptions{}); err != nil {
-		return fmt.Errorf("storage: %s put object %w", m.provider, err)
-	}
-
-	return nil
 }
 
 func (m *MinioClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
@@ -132,4 +124,13 @@ func (m *MinioClient) UploadObject(ctx context.Context, i UploadObjectInput) err
 	}
 
 	return nil
+}
+
+func (m *MinioClient) HeadObject(ctx context.Context, bucket, key string) (ObjectAttr, error) {
+	attr, err := m.cli.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
+	if err != nil {
+		return ObjectAttr{}, fmt.Errorf("storage: %s head object %w", m.provider, err)
+	}
+
+	return ObjectAttr{Key: attr.Key, Length: attr.Size, ETag: attr.ETag}, nil
 }

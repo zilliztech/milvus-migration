@@ -17,13 +17,15 @@ type WorkerPool struct {
 	subCtx context.Context
 
 	workerNum int
-	lim       *rate.Limiter
+	rpsLim    *rate.Limiter
+
+	retry int
 }
 
 type Job func(ctx context.Context) error
 
-// NewWorkerPool build a worker pool, rps 0 is unlimited
-func NewWorkerPool(ctx context.Context, workerNum int, rps int32) (*WorkerPool, error) {
+// NewWorkerPool build a worker pool, rps 0 is unlimited, retry 0 will not retry
+func NewWorkerPool(ctx context.Context, workerNum int, rps int32, retry int) (*WorkerPool, error) {
 	if workerNum <= 0 {
 		return nil, errors.New("workerpool: worker num can not less than 0")
 	}
@@ -31,31 +33,42 @@ func NewWorkerPool(ctx context.Context, workerNum int, rps int32) (*WorkerPool, 
 	// Including the main worker
 	g.SetLimit(workerNum + 1)
 
-	var lim *rate.Limiter
+	var rpsLim *rate.Limiter
 	if rps != 0 {
-		lim = rate.NewLimiter(rate.Every(time.Second/time.Duration(rps)), 1)
+		rpsLim = rate.NewLimiter(rate.Every(time.Second/time.Duration(rps)), 1)
 	}
 
-	return &WorkerPool{job: make(chan Job), workerNum: workerNum, g: g, lim: lim, subCtx: subCtx}, nil
+	return &WorkerPool{job: make(chan Job), workerNum: workerNum, g: g, rpsLim: rpsLim, subCtx: subCtx, retry: retry}, nil
+}
+
+func (p *WorkerPool) runJob(job Job) error {
+	if p.rpsLim != nil {
+		if err := p.rpsLim.Wait(p.subCtx); err != nil {
+			return fmt.Errorf("workerpool: wait token %w", err)
+		}
+	}
+
+	var errs error
+	if err := job(p.subCtx); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("workerpool: execute job %w", err))
+		for i := 0; i < p.retry; i++ {
+			if err := job(p.subCtx); err != nil {
+				errs = errors.Join(errs, fmt.Errorf("workerpool: execute job %w retry cnt: %d", err, i))
+				continue
+			} else {
+				return nil
+			}
+		}
+	}
+
+	return errs
 }
 
 func (p *WorkerPool) Start() { p.g.Go(p.work) }
 func (p *WorkerPool) work() error {
 	for j := range p.job {
-		job := j
-		p.g.Go(func() error {
-			if p.lim != nil {
-				if err := p.lim.Wait(p.subCtx); err != nil {
-					return fmt.Errorf("workerpool: wait token %w", err)
-				}
-			}
-
-			if err := job(p.subCtx); err != nil {
-				return fmt.Errorf("workerpool: execute job %w", err)
-			}
-
-			return nil
-		})
+		task := j
+		p.g.Go(func() error { return p.runJob(task) })
 	}
 	return nil
 }
