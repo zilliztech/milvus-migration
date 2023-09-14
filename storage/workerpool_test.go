@@ -9,12 +9,12 @@ import (
 )
 
 func Test0Worker(t *testing.T) {
-	_, err := NewWorkerPool(context.Background(), 0, 0)
+	_, err := NewWorkerPool(context.Background(), 0, 0, 0)
 	assert.NotNil(t, err)
 }
 
 func TestRunTaskNoErr(t *testing.T) {
-	wp, err := NewWorkerPool(context.Background(), 3, 10)
+	wp, err := NewWorkerPool(context.Background(), 3, 10, 0)
 	assert.Nil(t, err)
 
 	wp.Start()
@@ -33,7 +33,7 @@ func TestRunTaskNoErr(t *testing.T) {
 }
 
 func TestRunTaskReturnErr(t *testing.T) {
-	wp, err := NewWorkerPool(context.Background(), 10, 10)
+	wp, err := NewWorkerPool(context.Background(), 10, 10, 0)
 	assert.Nil(t, err)
 
 	wp.Start()
