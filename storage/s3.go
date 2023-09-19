@@ -82,6 +82,11 @@ func (c *S3Client) HeadBucket(ctx context.Context, bucket string) error {
 }
 
 func (c *S3Client) CopyObject(ctx context.Context, i CopyObjectInput) error {
+	_, ok := i.SrcCli.(*S3Client)
+	if !ok {
+		return fmt.Errorf("storage: s3 copy object dest client is not s3 client")
+	}
+
 	source := fmt.Sprintf("%s/%s", i.SrcBucket, i.SrcKey)
 	params := s3.CopyObjectInput{
 		Bucket:     aws.String(i.DestBucket),

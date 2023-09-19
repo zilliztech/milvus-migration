@@ -168,7 +168,7 @@ func (c *Copier) selectCopyFn() copyFn {
 }
 
 func (c *Copier) copyRemote(ctx context.Context, attr ObjectAttr, destKey, srcBucket, destBucket string) error {
-	i := CopyObjectInput{SrcBucket: srcBucket, SrcKey: attr.Key, DestBucket: destBucket, DestKey: destKey}
+	i := CopyObjectInput{SrcBucket: srcBucket, SrcKey: attr.Key, DestBucket: destBucket, DestKey: destKey, SrcCli: c.src}
 	if err := c.dest.CopyObject(ctx, i); err != nil {
 		return fmt.Errorf("storage: copier copy object %w", err)
 	}

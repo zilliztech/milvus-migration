@@ -12,12 +12,13 @@ const (
 	AWS     Provider = "aws"
 	GCP     Provider = "gcp"
 	ALI     Provider = "ali"
+	AZURE   Provider = "azure"
 	unknown Provider = "unknown"
 )
 
 const _defaultPageSize = 1000
 
-var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI}
+var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI, "azure": AZURE}
 
 func ParseProvider(s string) Provider {
 	if p, ok := _providerMap[s]; ok {
@@ -54,6 +55,8 @@ func NewClient(cfg Cfg) (Client, error) {
 		return NewGCPClient(cfg)
 	case ALI:
 		return NewAliyunClient(cfg)
+	case AZURE:
+		return NewAzureClient(cfg)
 	default:
 		return nil, fmt.Errorf("storage: unknown provide %s", cfg.Provider)
 	}
@@ -74,6 +77,8 @@ type CreateBucketInput struct {
 }
 
 type CopyObjectInput struct {
+	SrcCli Client
+
 	SrcBucket string
 	SrcKey    string
 
