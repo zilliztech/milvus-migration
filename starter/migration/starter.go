@@ -14,8 +14,9 @@ import (
 )
 
 type Starter struct {
-	Dumper *dumper.Dumper
-	Loader *loader.CustomMilvus2xLoader
+	Dumper    *dumper.Dumper
+	Loader    *loader.CustomMilvus2xLoader //custom milvus table mapping loader
+	Loader_ff *loader.Milvus2xLoader       //fixed milvus collection field(id,data) loader
 	//Submitter   *task.ChanTasker
 	MigrCfg  *config.MigrationConfig
 	WorkMode string
@@ -24,17 +25,38 @@ type Starter struct {
 
 func NewStarter(migrCfg *config.MigrationConfig, jobId string) (*Starter, error) {
 	dumper := dumper.NewDumperWithConfig(migrCfg, jobId)
-	loader, err := loader.NewCusFieldMilvus2xLoader(migrCfg)
-	if err != nil {
-		return nil, err
-	}
-	return &Starter{
-		Dumper:   dumper,
-		Loader:   loader,
+	start := &Starter{
+		Dumper: dumper,
+		//Loader:   loader,
 		MigrCfg:  migrCfg,
 		JobId:    jobId,
 		WorkMode: migrCfg.DumperWorkCfg.WorkMode,
-	}, nil
+	}
+	if common.DumpMode(migrCfg.DumperWorkCfg.WorkMode) == common.Elasticsearch {
+		//管理进度处理器: milvus1x,faiss 走老的进度处理
+		gstore.InitProcessHandler(jobId)
+
+		/*
+			record: es dump will split many small json file task， finish dump one then load this one file
+			milvus1x,faiss： simple handle: all file dump finish then load all file, so not need FileTask
+		*/
+		gstore.InitFileTask(jobId)
+
+		//set custom collection filed loader
+		loader, err := loader.NewCusFieldMilvus2xLoader(migrCfg)
+		if err != nil {
+			return nil, err
+		}
+		start.Loader = loader
+	} else {
+		//set fixed collection filed loader
+		loader, err := loader.NewMilvus2xLoader(migrCfg, jobId)
+		if err != nil {
+			return nil, err
+		}
+		start.Loader_ff = loader
+	}
+	return start, nil
 }
 
 func (starter *Starter) Run(ctx context.Context) error {
@@ -54,6 +76,10 @@ func (starter *Starter) doByWorkMode(ctx context.Context) error {
 	switch common.DumpMode(starter.WorkMode) {
 	case common.Elasticsearch:
 		return starter.migrationES(ctx)
+	case common.Milvus1x:
+		return starter.migrationMilvus1x(ctx)
+	case common.Faiss:
+		return starter.migrationFaiss(ctx)
 	default:
 		return fmt.Errorf("not support Starter WorkMode %s", starter.WorkMode)
 	}

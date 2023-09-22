@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+/*
+BaseLoadTasker : custom collection structure dump&load Tasker
+*/
 type BaseLoadTasker struct {
 	DataChannel       chan *FileInfo
 	CheckChannel      chan *FileInfo
@@ -21,7 +24,7 @@ type BaseLoadTasker struct {
 	BulkInsertingNums *atomic.Int32
 }
 
-func NewBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, jobId string) *BaseLoadTasker {
+func NewCusBaseLoadTasker(cusFieldLoader *loader.CustomMilvus2xLoader, jobId string) *BaseLoadTasker {
 	loadTasker := &BaseLoadTasker{
 		DataChannel:       make(chan *FileInfo, 100),
 		CheckChannel:      make(chan *FileInfo, 100),
@@ -62,8 +65,12 @@ func (tasker BaseLoadTasker) incTaskCount(ctx context.Context, task *FileInfo, t
 		zap.String("fileName", task.fn), zap.Int64("taskId", taskId))
 }
 
-func (tasker BaseLoadTasker) GetMilvusLoader() *loader.CustomMilvus2xLoader {
-	return tasker.CusFieldLoader
+//func (tasker BaseLoadTasker) GetMilvusLoader() *loader.CustomMilvus2xLoader {
+//	return tasker.CusFieldLoader
+//}
+
+func (tasker BaseLoadTasker) Write(ctx context.Context, fileName string, collection string) (int64, error) {
+	return tasker.CusFieldLoader.Write2Milvus(ctx, fileName, collection)
 }
 
 // Check : check task progress

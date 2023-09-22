@@ -2,7 +2,6 @@ package task
 
 import (
 	"context"
-	"github.com/zilliztech/milvus-migration/core/loader"
 )
 
 type FileInfo struct {
@@ -12,7 +11,8 @@ type FileInfo struct {
 }
 
 type InitTasker interface {
-	Init(ctx context.Context, loader *loader.CustomMilvus2xLoader) error
+	//Init(ctx context.Context, loader *loader.CustomMilvus2xLoader) error
+	Init(ctx context.Context) error
 }
 
 type LoadTasker interface {
@@ -25,7 +25,8 @@ type LoadTasker interface {
 	// Check : check task progress
 	Check(ctx context.Context) error
 	GetDataChannel() chan *FileInfo
-	GetMilvusLoader() *loader.CustomMilvus2xLoader
+	//GetMilvusLoader() *loader.CustomMilvus2xLoader
+	Write(ctx context.Context, fileName string, collection string) (int64, error)
 	LoopCheckBacklog() error
 	LoopCheckStateUntilSuc(ctx context.Context, task *FileInfo) error
 }

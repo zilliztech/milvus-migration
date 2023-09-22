@@ -31,7 +31,7 @@ func (submiter Submitter) Start(ctx context.Context) error {
 
 	defer submiter.Loader.CloseCheckChannel()
 
-	err := submiter.Initer.Init(ctx, submiter.Loader.GetMilvusLoader())
+	err := submiter.Initer.Init(ctx)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (submiter Submitter) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		taskId, err := submiter.Loader.GetMilvusLoader().Write2Milvus(ctx, task.fn, task.cn)
+		taskId, err := submiter.Loader.Write(ctx, task.fn, task.cn)
 		if err != nil {
 			return err
 		}

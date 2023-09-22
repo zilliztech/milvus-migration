@@ -31,5 +31,4 @@ func stepFilterCols(migrationCfg *config.MigrationConfig, collections []string) 
 	if collections != nil {
 		migrationCfg.FilterCols = collections
 	}
-
 }

@@ -195,7 +195,12 @@ func (this *Milvus2xLoader) loadDataOne(ctx context.Context, col common.Collecti
 		return err
 	}
 
-	return this.milvus.WaitBulkLoadSuccess(ctx, taskId)
+	err = this.milvus.WaitBulkLoadSuccess(ctx, taskId)
+	if err != nil {
+		return err
+	}
+	gstore.AddFinishTasks(this.jobId, 1)
+	return nil
 }
 
 func (this *Milvus2xLoader) compareResult(ctx context.Context) error {
