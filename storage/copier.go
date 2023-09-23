@@ -98,6 +98,7 @@ type CopyPathInput struct {
 	OnSuccess func(attr ObjectAttr, total Total)
 }
 
+// getAttrs get all attrs under bucket/prefix
 func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string) ([]ObjectAttr, Total, error) {
 	var attrs []ObjectAttr
 	var length int64
@@ -109,6 +110,9 @@ func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string) ([]ObjectA
 			return nil, Total{}, fmt.Errorf("storage: copier list objects %w", err)
 		}
 		for _, attr := range page.Contents {
+			if attr.IsEmpty() {
+				continue
+			}
 			attrs = append(attrs, attr)
 			length += attr.Length
 			count++
