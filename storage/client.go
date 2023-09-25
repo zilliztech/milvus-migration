@@ -12,12 +12,13 @@ const (
 	AWS     Provider = "aws"
 	GCP     Provider = "gcp"
 	ALI     Provider = "ali"
+	AZURE   Provider = "azure"
 	unknown Provider = "unknown"
 )
 
 const _defaultPageSize = 1000
 
-var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI}
+var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI, "azure": AZURE}
 
 func ParseProvider(s string) Provider {
 	if p, ok := _providerMap[s]; ok {
@@ -32,12 +33,12 @@ type Client interface {
 	CopyObject(ctx context.Context, i CopyObjectInput) error
 	// HeadBucket determine if a bucket exists, and you have permission to access it
 	HeadBucket(ctx context.Context, bucket string) error
+	// HeadObject determine if an object exists, and you have permission to access it.
+	HeadObject(ctx context.Context, bucket, key string) (ObjectAttr, error)
 	// ListObjectsPage paginate list of all objects
 	ListObjectsPage(ctx context.Context, i ListObjectPageInput) ListObjectsPaginator
 	// GetObject get an object
 	GetObject(ctx context.Context, i GetObjectInput) (*Object, error)
-	// PutObject put an object
-	PutObject(ctx context.Context, i PutObjectInput) error
 	// DeleteObjects delete an object
 	DeleteObjects(ctx context.Context, i DeleteObjectsInput) error
 	// DeletePrefix delete all object under the prefix
@@ -54,6 +55,8 @@ func NewClient(cfg Cfg) (Client, error) {
 		return NewGCPClient(cfg)
 	case ALI:
 		return NewAliyunClient(cfg)
+	case AZURE:
+		return NewAzureClient(cfg)
 	default:
 		return nil, fmt.Errorf("storage: unknown provide %s", cfg.Provider)
 	}
@@ -74,6 +77,8 @@ type CreateBucketInput struct {
 }
 
 type CopyObjectInput struct {
+	SrcCli Client
+
 	SrcBucket string
 	SrcKey    string
 
@@ -93,13 +98,6 @@ type ListObjectPageInput struct {
 type GetObjectInput struct {
 	Bucket string
 	Key    string
-}
-
-type PutObjectInput struct {
-	Bucket string
-	Key    string
-	Length int64
-	Body   io.Reader
 }
 
 type DeleteObjectsInput struct {
@@ -129,6 +127,15 @@ type Object struct {
 type ObjectAttr struct {
 	Key    string
 	Length int64
+
+	// The documentation for s3 says, ETag may NOT be an MD5 digest of the object data.
+	ETag string
+}
+
+// SameAs returns true if two ObjectAttr are the same.
+// If two ObjectAttr have same length and ETag, they are considered.
+func (o *ObjectAttr) SameAs(other ObjectAttr) bool {
+	return o.Length == other.Length && o.ETag == other.ETag
 }
 
 type Page struct {

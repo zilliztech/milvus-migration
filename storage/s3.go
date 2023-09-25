@@ -39,7 +39,11 @@ type S3Client struct {
 }
 
 func NewS3Client(cfg Cfg) (*S3Client, error) {
-	awsCfg, err := awsconfig.LoadDefaultConfig(context.TODO(), awsconfig.WithRegion(cfg.Region))
+	optFns := []func(options *awsconfig.LoadOptions) error{
+		awsconfig.WithRegion(cfg.Region),
+		awsconfig.WithRetryer(func() aws.Retryer { return aws.NopRetryer{} }),
+	}
+	awsCfg, err := awsconfig.LoadDefaultConfig(context.TODO(), optFns...)
 	if err != nil {
 		return nil, fmt.Errorf("storage: new aws cli %w", err)
 	}
@@ -78,6 +82,11 @@ func (c *S3Client) HeadBucket(ctx context.Context, bucket string) error {
 }
 
 func (c *S3Client) CopyObject(ctx context.Context, i CopyObjectInput) error {
+	_, ok := i.SrcCli.(*S3Client)
+	if !ok {
+		return fmt.Errorf("storage: s3 copy object dest client is not s3 client")
+	}
+
 	source := fmt.Sprintf("%s/%s", i.SrcBucket, i.SrcKey)
 	params := s3.CopyObjectInput{
 		Bucket:     aws.String(i.DestBucket),
@@ -123,7 +132,7 @@ func (p *S3ListObjectPaginator) NextPage(ctx context.Context) (*Page, error) {
 
 	contents := make([]ObjectAttr, 0, len(page.Contents))
 	for _, obj := range page.Contents {
-		contents = append(contents, ObjectAttr{Length: obj.Size, Key: *obj.Key})
+		contents = append(contents, ObjectAttr{Length: obj.Size, Key: *obj.Key, ETag: *obj.ETag})
 	}
 
 	return &Page{Contents: contents}, nil
@@ -137,19 +146,6 @@ func (c *S3Client) GetObject(ctx context.Context, i GetObjectInput) (*Object, er
 	}
 
 	return &Object{Body: o.Body, Length: o.ContentLength}, nil
-}
-
-func (c *S3Client) PutObject(ctx context.Context, i PutObjectInput) error {
-	params := s3.PutObjectInput{
-		Bucket:        aws.String(i.Bucket),
-		Body:          i.Body,
-		Key:           aws.String(i.Key),
-		ContentLength: i.Length,
-	}
-	if _, err := c.cli.PutObject(ctx, &params); err != nil {
-		return fmt.Errorf("storage: s3 put object %w", err)
-	}
-	return nil
 }
 
 func (c *S3Client) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
@@ -207,9 +203,11 @@ func (c *S3Client) UploadObject(ctx context.Context, i UploadObjectInput) error 
 	firstBlock = firstBlock[:n]
 	if n < _5M {
 		reader := bytes.NewReader(firstBlock)
-		putInput := PutObjectInput{Bucket: i.Bucket, Key: i.Key, Length: int64(n), Body: reader}
-		if err := c.PutObject(ctx, putInput); err != nil {
-			return fmt.Errorf("storage: upload object put object %w", err)
+		putInput := &s3.PutObjectInput{
+			Bucket: aws.String(i.Bucket), Key: aws.String(i.Key), Body: reader, ContentLength: int64(len(firstBlock)),
+		}
+		if _, err := c.cli.PutObject(ctx, putInput); err != nil {
+			return fmt.Errorf("storage: s3 upload object put object %w", err)
 		}
 
 		return nil
@@ -219,6 +217,14 @@ func (c *S3Client) UploadObject(ctx context.Context, i UploadObjectInput) error 
 		return err
 	}
 	return nil
+}
+
+func (c *S3Client) HeadObject(ctx context.Context, bucket, key string) (ObjectAttr, error) {
+	obj, err := c.cli.HeadObject(ctx, &s3.HeadObjectInput{Bucket: aws.String(bucket), Key: aws.String(key)})
+	if err != nil {
+		return ObjectAttr{}, fmt.Errorf("storage: s3 head object %w", err)
+	}
+	return ObjectAttr{Key: key, ETag: *obj.ETag, Length: obj.ContentLength}, nil
 }
 
 func newCompleteReq(bucket, key, uploadID string, parts []types.CompletedPart) s3.CompleteMultipartUploadInput {
@@ -241,7 +247,7 @@ func (c *S3Client) uploadObject(ctx context.Context, firstBlock []byte, i Upload
 	partNum := int32(1)
 	var partsMu sync.Mutex
 	var bp bytebufferpool.Pool
-	wp, err := NewWorkerPool(ctx, i.WorkerNum, i.RPS)
+	wp, err := NewWorkerPool(ctx, i.WorkerNum, i.RPS, 3)
 	if err != nil {
 		return fmt.Errorf("storage: s3 upload object %w", err)
 	}
