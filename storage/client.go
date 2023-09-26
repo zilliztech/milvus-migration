@@ -138,6 +138,8 @@ func (o *ObjectAttr) SameAs(other ObjectAttr) bool {
 	return o.Length == other.Length && o.ETag == other.ETag
 }
 
+func (o *ObjectAttr) IsEmpty() bool { return o.Length == 0 }
+
 type Page struct {
 	Contents []ObjectAttr
 }
