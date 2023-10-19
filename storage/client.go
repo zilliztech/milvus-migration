@@ -18,7 +18,7 @@ const (
 
 const _defaultPageSize = 1000
 
-var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI, "azure": AZURE}
+var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI, "azure": AZURE, "az": AZURE}
 
 func ParseProvider(s string) Provider {
 	if p, ok := _providerMap[s]; ok {
