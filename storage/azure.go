@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
@@ -15,14 +16,26 @@ type AzureClient struct {
 }
 
 func NewAzureClient(cfg Cfg) (*AzureClient, error) {
-	cred, err := azblob.NewSharedKeyCredential(cfg.AK, cfg.SK)
-	if err != nil {
-		return nil, fmt.Errorf("storage: new azure shared key credential %w", err)
-	}
 	endpoint := fmt.Sprintf("https://%s.blob.core.windows.net", cfg.AK)
-	cli, err := azblob.NewClientWithSharedKeyCredential(endpoint, cred, nil)
-	if err != nil {
-		return nil, fmt.Errorf("storage: new azure client %w", err)
+	var cli *azblob.Client
+	if cfg.UseIAM {
+		cred, err := azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, fmt.Errorf("storage: new azure default azure credential %w", err)
+		}
+		cli, err = azblob.NewClient(endpoint, cred, nil)
+		if err != nil {
+			return nil, fmt.Errorf("storage: new azure client %w", err)
+		}
+	} else {
+		cred, err := azblob.NewSharedKeyCredential(cfg.AK, cfg.SK)
+		if err != nil {
+			return nil, fmt.Errorf("storage: new azure shared key credential %w", err)
+		}
+		cli, err = azblob.NewClientWithSharedKeyCredential(endpoint, cred, nil)
+		if err != nil {
+			return nil, fmt.Errorf("storage: new azure client %w", err)
+		}
 	}
 
 	return &AzureClient{account: cfg.AK, cli: cli}, nil
