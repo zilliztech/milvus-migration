@@ -1,14 +1,15 @@
 filters:
   ".*":
     reviewers:
-      - BeyonderXie
+      - lentitude2tk
       - huanghaoyuanhhy
       - Thomas-HuWei
       - yelusion2
+      - wenhuiZilliz
 
     approvers:
-      - BeyonderXie
+      - lentitude2tk
       - huanghaoyuanhhy
       - Thomas-HuWei
       - yelusion2
-
+      - wenhuiZilliz
