@@ -158,12 +158,22 @@ func (c *Copier) CopyPrefix(ctx context.Context, i CopyPathInput) error {
 		attr := srcAttr
 		job := func(ctx context.Context) error {
 			destKey := i.DestKeyFn(attr)
+			// copy
 			destAttr, err := c.dest.HeadObject(ctx, i.DestBucket, destKey)
 			if err != nil || !attr.SameAs(destAttr) {
 				if err := fn(ctx, attr, destKey, i.SrcBucket, i.DestBucket); err != nil {
 					return fmt.Errorf("storage: copier copy object %w", err)
 				}
 			}
+			// check
+			destAttr, err = c.dest.HeadObject(ctx, i.DestBucket, destKey)
+			if err != nil {
+				return fmt.Errorf("storage: after copy  %w", err)
+			}
+			if destAttr.Length != attr.Length {
+				return fmt.Errorf("storage: dest len %d != src len %d", destAttr.Length, attr.Length)
+			}
+
 			if i.OnSuccess != nil {
 				i.OnSuccess(attr)
 			}
