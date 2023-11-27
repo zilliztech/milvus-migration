@@ -119,7 +119,11 @@ func (m *MinioClient) DeletePrefix(ctx context.Context, i DeletePrefixInput) err
 
 func (m *MinioClient) UploadObject(ctx context.Context, i UploadObjectInput) error {
 	opt := minio.PutObjectOptions{}
-	if _, err := m.cli.PutObject(ctx, i.Bucket, i.Key, i.Body, -1, opt); err != nil {
+	size := int64(-1)
+	if i.Size > 0 {
+		size = i.Size
+	}
+	if _, err := m.cli.PutObject(ctx, i.Bucket, i.Key, i.Body, size, opt); err != nil {
 		return fmt.Errorf("storage: %s upload object %w", m.provider, err)
 	}
 

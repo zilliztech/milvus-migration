@@ -117,6 +117,10 @@ type UploadObjectInput struct {
 
 	WorkerNum int
 	RPS       int32
+
+	// The size of the file to be uploaded, if unknown, set to 0 or negative
+	// Configuring this parameter can help reduce memory usage.
+	Size int64
 }
 
 type Object struct {
