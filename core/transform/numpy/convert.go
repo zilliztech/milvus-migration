@@ -1,3 +1,7 @@
+// Copyright 2016 The npyio Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package npconvert
 
 import (
@@ -5,10 +9,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/zilliztech/milvus-migration/core/common"
-	"github.com/zilliztech/milvus-migration/internal/log"
 	"strconv"
 	"strings"
+
+	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/internal/log"
 )
 
 var numpy_magic_head = []byte{'\x93', 'N', 'U', 'M', 'P', 'Y'}
