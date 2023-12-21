@@ -75,12 +75,20 @@ func (a *AzureClient) CopyObject(ctx context.Context, i CopyObjectInput) error {
 		url = fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", srcCli.account, i.SrcBucket, i.SrcKey)
 	}
 
-	_, err := a.cli.ServiceClient().
-		NewContainerClient(i.DestBucket).
-		NewBlockBlobClient(i.DestKey).
-		StartCopyFromURL(ctx, url, nil)
+	blobCli := a.cli.ServiceClient().NewContainerClient(i.DestBucket).NewBlockBlobClient(i.DestKey)
+	blobProperties, err := blobCli.BlobClient().GetProperties(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("storage: azure start copy from url %w", err)
+		return fmt.Errorf("storage: azure get properties %w", err)
+	}
+	if blobProperties.CopyID != nil {
+		_, err := blobCli.AbortCopyFromURL(ctx, *blobProperties.CopyID, nil)
+		if err != nil {
+			return fmt.Errorf("storage: azure abort copy from url %w", err)
+		}
+	}
+
+	if _, err := blobCli.CopyFromURL(ctx, url, nil); err != nil {
+		return fmt.Errorf("storage: azure copy from url %w", err)
 	}
 
 	return nil
