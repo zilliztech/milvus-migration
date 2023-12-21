@@ -80,15 +80,13 @@ func (a *AzureClient) CopyObject(ctx context.Context, i CopyObjectInput) error {
 	if err != nil {
 		return fmt.Errorf("storage: azure get properties %w", err)
 	}
+	var copyErr error
 	if blobProperties.CopyID != nil {
-		_, err := blobCli.AbortCopyFromURL(ctx, *blobProperties.CopyID, nil)
-		if err != nil {
-			return fmt.Errorf("storage: azure abort copy from url %w", err)
-		}
+		_, copyErr = blobCli.AbortCopyFromURL(ctx, *blobProperties.CopyID, nil)
 	}
 
 	if _, err := blobCli.CopyFromURL(ctx, url, nil); err != nil {
-		return fmt.Errorf("storage: azure copy from url %w", err)
+		return fmt.Errorf("storage: azure copy from url %w abort %w", err, copyErr)
 	}
 
 	return nil
