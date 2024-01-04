@@ -3,14 +3,21 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
+)
+
+const (
+	_concurrency = 10
+	_blockSize   = 16 << 20
 )
 
 type AzureClient struct {
@@ -164,19 +171,94 @@ func (a *AzureClient) ListObjectsPage(_ context.Context, i ListObjectPageInput) 
 	return &AzureListObjectPaginator{p: p}
 }
 
-func (a *AzureClient) GetObject(ctx context.Context, i GetObjectInput) (*Object, error) {
-	resp, err := a.cli.DownloadStream(ctx, i.Bucket, i.Key, nil)
-	if err != nil {
-		return nil, fmt.Errorf("storage: azure download stream %w", err)
+type AzureReader struct {
+	cli    *blockblob.Client
+	length int64
+	pos    int64
+}
+
+func (a *AzureReader) Read(p []byte) (int, error) {
+	if a.pos >= a.length {
+		return 0, io.EOF
+	}
+	count := int64(len(p))
+	if a.pos+count >= a.length {
+		count = a.length - a.pos
 	}
 
-	return &Object{Body: resp.Body, Length: *resp.ContentLength}, nil
+	opt := &azblob.DownloadBufferOptions{
+		Range:       azblob.HTTPRange{Offset: a.pos, Count: count},
+		Concurrency: _concurrency,
+		BlockSize:   _blockSize,
+	}
+	n, err := a.cli.DownloadBuffer(context.Background(), p, opt)
+	a.pos += n
+
+	if err != nil {
+		return int(n), fmt.Errorf("storage: read azure download buffer %w pos:%d count:%d file-len:%d buff-len:%d", err, a.pos, count, a.length, len(p))
+	}
+
+	return int(n), nil
+}
+
+func (a *AzureReader) Seek(offset int64, whence int) (int64, error) {
+	var newOffset int64
+	switch whence {
+	case io.SeekStart:
+		newOffset = offset
+	case io.SeekCurrent:
+		newOffset = a.pos + offset
+	case io.SeekEnd:
+		newOffset = a.length + offset
+	default:
+		return 0, fmt.Errorf("storage: azure seek invalid whence %d", whence)
+	}
+	a.pos = newOffset
+
+	return newOffset, nil
+}
+
+func (a *AzureReader) Close() error { return nil }
+
+func (a *AzureReader) ReadAt(p []byte, off int64) (int, error) {
+	if off >= a.length {
+		return 0, io.EOF
+	}
+
+	if off+int64(len(p)) > a.length {
+		p = p[:a.length-off]
+	}
+
+	opt := &azblob.DownloadBufferOptions{
+		Range:       azblob.HTTPRange{Offset: off, Count: int64(len(p))},
+		Concurrency: _concurrency,
+		BlockSize:   _blockSize,
+	}
+	n, err := a.cli.DownloadBuffer(context.Background(), p, opt)
+	if err != nil {
+		return int(n), fmt.Errorf("storage: read azure download buffer %w file-len:%d buff-len:%d off:%d", err, a.length, len(p), off)
+	}
+
+	if n != int64(len(p)) {
+		return int(n), io.EOF
+	}
+
+	return int(n), nil
+}
+
+func (a *AzureClient) GetObject(ctx context.Context, i GetObjectInput) (*Object, error) {
+	blobCli := a.cli.ServiceClient().NewContainerClient(i.Bucket).NewBlockBlobClient(i.Key)
+	props, err := blobCli.GetProperties(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("storage: azure get properties %w", err)
+	}
+
+	return &Object{Body: &AzureReader{cli: blobCli, length: *props.ContentLength}, Length: *props.ContentLength}, nil
 }
 
 func (a *AzureClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
 	for _, key := range i.Keys {
-		_, err := a.cli.DeleteBlob(ctx, i.Bucket, key, nil)
-		if err != nil {
+		if _, err := a.cli.DeleteBlob(ctx, i.Bucket, key, nil); err != nil {
 			return fmt.Errorf("storage: azure delete object %w", err)
 		}
 	}
@@ -208,7 +290,8 @@ func (a *AzureClient) DeletePrefix(ctx context.Context, i DeletePrefixInput) err
 }
 
 func (a *AzureClient) UploadObject(ctx context.Context, i UploadObjectInput) error {
-	if _, err := a.cli.UploadStream(ctx, i.Bucket, i.Key, i.Body, nil); err != nil {
+	opt := &azblob.UploadStreamOptions{Concurrency: _concurrency, BlockSize: _blockSize}
+	if _, err := a.cli.UploadStream(ctx, i.Bucket, i.Key, i.Body, opt); err != nil {
 		return fmt.Errorf("storage: azure upload stream %w", err)
 	}
 

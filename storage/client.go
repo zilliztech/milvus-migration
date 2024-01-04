@@ -50,7 +50,7 @@ type Client interface {
 func NewClient(cfg Cfg) (Client, error) {
 	switch cfg.Provider {
 	case AWS:
-		return NewS3Client(cfg)
+		return NewAWSClient(cfg)
 	case GCP:
 		return NewGCPClient(cfg)
 	case ALI:
@@ -123,9 +123,15 @@ type UploadObjectInput struct {
 	Size int64
 }
 
+type SeekableReadCloser interface {
+	io.ReaderAt
+	io.Seeker
+	io.ReadCloser
+}
+
 type Object struct {
 	Length int64
-	Body   io.ReadCloser
+	Body   SeekableReadCloser
 }
 
 type ObjectAttr struct {

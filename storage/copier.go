@@ -224,7 +224,7 @@ func (c *Copier) copyLocal(ctx context.Context, attr ObjectAttr, destKey, srcBuc
 	}
 	i := UploadObjectInput{Body: body, Bucket: destBucket, Key: destKey, WorkerNum: 1, Size: attr.Length}
 	if err := c.dest.UploadObject(ctx, i); err != nil {
-		return fmt.Errorf("storage: copier put object %w", err)
+		return fmt.Errorf("storage: copier upload object %w", err)
 	}
 
 	return nil
