@@ -76,17 +76,24 @@ func (a *AzureClient) CopyObject(ctx context.Context, i CopyObjectInput) error {
 	}
 
 	blobCli := a.cli.ServiceClient().NewContainerClient(i.DestBucket).NewBlockBlobClient(i.DestKey)
-	blobProperties, err := blobCli.BlobClient().GetProperties(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("storage: azure get properties %w", err)
-	}
-	var copyErr error
-	if blobProperties.CopyID != nil {
-		_, copyErr = blobCli.AbortCopyFromURL(ctx, *blobProperties.CopyID, nil)
-	}
+
+	// we need to abort the previous copy operation before copy from url
+	abortErr := func() error {
+		blobProperties, err := blobCli.BlobClient().GetProperties(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("storage: azure get properties %w", err)
+		}
+		if blobProperties.CopyID != nil {
+			if _, err = blobCli.AbortCopyFromURL(ctx, *blobProperties.CopyID, nil); err != nil {
+				return fmt.Errorf("storage: azure abort copy from url %w", err)
+			}
+		}
+
+		return nil
+	}()
 
 	if _, err := blobCli.CopyFromURL(ctx, url, nil); err != nil {
-		return fmt.Errorf("storage: azure copy from url %w abort %w", err, copyErr)
+		return fmt.Errorf("storage: azure copy from url %w abort previous %w", err, abortErr)
 	}
 
 	return nil
