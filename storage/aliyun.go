@@ -17,7 +17,7 @@ type credentialProvider struct {
 	aliyunCred aliyunCred.Credential
 }
 
-func newCredentialProvider() (*credentialProvider, error) {
+func newAliCredentialProvider() (*credentialProvider, error) {
 	cred, err := aliyunCred.NewCredential(nil)
 	if err != nil {
 		return nil, fmt.Errorf("create aliyun credential %w", err)
@@ -66,7 +66,7 @@ func (c *credentialProvider) IsExpired() bool {
 func NewAliyunClient(cfg Cfg) (*MinioClient, error) {
 	opts := minio.Options{Secure: cfg.UseSSL, Region: cfg.Region, BucketLookup: minio.BucketLookupDNS}
 	if cfg.UseIAM {
-		provider, err := newCredentialProvider()
+		provider, err := newAliCredentialProvider()
 		if err != nil {
 			return nil, fmt.Errorf("storage: new aliyun credential provider %w", err)
 		}

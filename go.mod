@@ -24,6 +24,7 @@ require (
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.853
 	github.com/tidwall/gjson v1.17.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	go.uber.org/atomic v1.11.0
