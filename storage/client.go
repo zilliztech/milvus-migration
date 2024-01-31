@@ -11,14 +11,15 @@ type Provider string
 const (
 	AWS     Provider = "aws"
 	GCP     Provider = "gcp"
-	ALI     Provider = "ali"
 	AZURE   Provider = "azure"
+	ALI     Provider = "ali"
+	TC      Provider = "tc"
 	unknown Provider = "unknown"
 )
 
 const _defaultPageSize = 1000
 
-var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI, "azure": AZURE, "az": AZURE}
+var _providerMap = map[string]Provider{"aws": AWS, "gcp": GCP, "ali": ALI, "azure": AZURE, "az": AZURE, "tc": TC}
 
 func ParseProvider(s string) Provider {
 	if p, ok := _providerMap[s]; ok {
@@ -53,10 +54,12 @@ func NewClient(cfg Cfg) (Client, error) {
 		return NewAWSClient(cfg)
 	case GCP:
 		return NewGCPClient(cfg)
-	case ALI:
-		return NewAliyunClient(cfg)
 	case AZURE:
 		return NewAzureClient(cfg)
+	case ALI:
+		return NewAliyunClient(cfg)
+	case TC:
+		return NewTencentClient(cfg)
 	default:
 		return nil, fmt.Errorf("storage: unknown provide %s", cfg.Provider)
 	}
