@@ -264,10 +264,21 @@ func (a *AzureClient) GetObject(ctx context.Context, i GetObjectInput) (*Object,
 }
 
 func (a *AzureClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
+	wp, err := NewWorkerPool(ctx, 10, 20, 3)
+	if err != nil {
+		return fmt.Errorf("storage: azure new worker pool %w", err)
+	}
+	wp.Start()
+
 	for _, key := range i.Keys {
 		if _, err := a.cli.DeleteBlob(ctx, i.Bucket, key, nil); err != nil {
 			return fmt.Errorf("storage: azure delete object %w", err)
 		}
+	}
+	wp.Done()
+
+	if err := wp.Wait(); err != nil {
+		return fmt.Errorf("storage: azure wait worker pool %w", err)
 	}
 
 	return nil

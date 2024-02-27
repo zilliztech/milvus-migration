@@ -87,14 +87,30 @@ func (m *MinioClient) GetObject(ctx context.Context, i GetObjectInput) (*Object,
 }
 
 func (m *MinioClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
-	var errs []error
+	wp, err := NewWorkerPool(ctx, 10, 20, 3)
+	if err != nil {
+		return fmt.Errorf("storage: %s delete prefix new worker pool %w", m.provider, err)
+	}
+	wp.Start()
+
 	for _, key := range i.Keys {
-		if err := m.cli.RemoveObject(ctx, i.Bucket, key, minio.RemoveObjectOptions{}); err != nil {
-			errs = append(errs, err)
+		job := func(ctx context.Context) error {
+			// we can't use RemoveObjects, because gcp doesn't support batch delete
+			if err := m.cli.RemoveObject(ctx, i.Bucket, key, minio.RemoveObjectOptions{}); err != nil {
+				return fmt.Errorf("storage: %s delete prefix remove key: %s %w", m.provider, key, err)
+			}
+
+			return nil
 		}
+		wp.Submit(job)
+	}
+	wp.Done()
+
+	if err := wp.Wait(); err != nil {
+		return fmt.Errorf("storage: %s delete prefix wait worker pool %w", m.provider, err)
 	}
 
-	return errors.Join(errs...)
+	return nil
 }
 
 func (m *MinioClient) DeletePrefix(ctx context.Context, i DeletePrefixInput) error {
@@ -102,19 +118,22 @@ func (m *MinioClient) DeletePrefix(ctx context.Context, i DeletePrefixInput) err
 		panic("empty prefix will delete all files under bucket")
 	}
 
-	var errs []error
 	listOpt := minio.ListObjectsOptions{Prefix: i.Prefix, Recursive: true}
+	var keys []string
 	for obj := range m.cli.ListObjects(ctx, i.Bucket, listOpt) {
 		if obj.Err != nil {
-			errs = append(errs, fmt.Errorf("storage: %s delete prefix list objects %w", m.provider, obj.Err))
-			continue
+			return fmt.Errorf("storage: %s delete prefix list objects %w", m.provider, obj.Err)
 		}
-		if err := m.cli.RemoveObject(ctx, i.Bucket, obj.Key, minio.RemoveObjectOptions{}); err != nil {
-			errs = append(errs, fmt.Errorf("storage: %s delete prefix remove key: %s %w", m.provider, obj.Key, err))
-		}
+		keys = append(keys, obj.Key)
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+	if err := m.DeleteObjects(ctx, DeleteObjectsInput{Bucket: i.Bucket, Keys: keys}); err != nil {
+		return fmt.Errorf("storage: %s delete prefix delete objects %w", m.provider, err)
 	}
 
-	return errors.Join(errs...)
+	return nil
 }
 
 func (m *MinioClient) UploadObject(ctx context.Context, i UploadObjectInput) error {
