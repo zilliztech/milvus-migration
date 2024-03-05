@@ -271,9 +271,13 @@ func (a *AzureClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) e
 	wp.Start()
 
 	for _, key := range i.Keys {
-		if _, err := a.cli.DeleteBlob(ctx, i.Bucket, key, nil); err != nil {
-			return fmt.Errorf("storage: azure delete object %w", err)
+		job := func(ctx context.Context) error {
+			if _, err := a.cli.DeleteBlob(ctx, i.Bucket, key, nil); err != nil {
+				return fmt.Errorf("storage: azure delete object %w", err)
+			}
+			return nil
 		}
+		wp.Submit(job)
 	}
 	wp.Done()
 
