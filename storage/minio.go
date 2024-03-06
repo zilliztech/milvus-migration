@@ -87,7 +87,7 @@ func (m *MinioClient) GetObject(ctx context.Context, i GetObjectInput) (*Object,
 }
 
 func (m *MinioClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
-	wp, err := NewWorkerPool(ctx, 10, 20, 3)
+	wp, err := NewWorkerPool(ctx, 500, 2000, 5)
 	if err != nil {
 		return fmt.Errorf("storage: %s delete prefix new worker pool %w", m.provider, err)
 	}

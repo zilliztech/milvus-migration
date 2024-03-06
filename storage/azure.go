@@ -264,7 +264,7 @@ func (a *AzureClient) GetObject(ctx context.Context, i GetObjectInput) (*Object,
 }
 
 func (a *AzureClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) error {
-	wp, err := NewWorkerPool(ctx, 10, 20, 3)
+	wp, err := NewWorkerPool(ctx, 500, 2000, 5)
 	if err != nil {
 		return fmt.Errorf("storage: azure new worker pool %w", err)
 	}
