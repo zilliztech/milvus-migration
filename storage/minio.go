@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -97,7 +98,10 @@ func (m *MinioClient) DeleteObjects(ctx context.Context, i DeleteObjectsInput) e
 		job := func(ctx context.Context) error {
 			// we can't use RemoveObjects, because gcp doesn't support batch delete
 			if err := m.cli.RemoveObject(ctx, i.Bucket, key, minio.RemoveObjectOptions{}); err != nil {
-				return fmt.Errorf("storage: %s delete prefix remove key: %s %w", m.provider, key, err)
+				if !strings.Contains(err.Error(), "The specified key does not exist") {
+					// if key not exist, we can ignore it
+					return fmt.Errorf("storage: %s delete prefix remove key: %s %w", m.provider, key, err)
+				}
 			}
 
 			return nil
