@@ -1,6 +1,9 @@
 package estype
 
-import "github.com/milvus-io/milvus-sdk-go/v2/entity"
+import (
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/zilliztech/milvus-migration/core/type/milvustype"
+)
 
 type MetaJSON struct {
 	IdxCfgs []*IdxCfg `json:"indexs"`
@@ -8,24 +11,14 @@ type MetaJSON struct {
 }
 
 type IdxCfg struct {
-	Index     string     `json:"index"`
-	Rows      int64      `json:"rows"`
-	Fields    []FieldCfg `json:"fields"`
-	MilvusCfg *MilvusCfg `json:"milvus"`
+	Index     string                `json:"index"`
+	Rows      int64                 `json:"rows"`
+	Fields    []FieldCfg            `json:"fields"`
+	MilvusCfg *milvustype.MilvusCfg `json:"milvus"`
 
 	InnerPkField *FieldCfg
 	InnerPkType  *entity.FieldType
 	//InnerHasPK   bool
-}
-
-type MilvusCfg struct {
-	Collection        string `json:"collection"`        //if empty, will use the ES index name as milvus collection
-	Dims              int    `json:"dims"`              //if Migration from es, will use ES dense_vector fields dims value
-	ShardNum          int    `json:"shardNum"`          //default value is 2
-	CloseDynamicField bool   `json:"closeDynamicField"` //default value: false
-	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
-	LoadData          bool   `json:"loadData"`          //default value: false
-	CreateIndex       bool   `json:"createIndex"`       //default value: false
 }
 
 type FieldCfg struct {

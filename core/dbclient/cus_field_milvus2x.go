@@ -7,6 +7,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/internal/log"
+	"github.com/zilliztech/milvus-migration/storage/milvus2x"
 	"go.uber.org/zap"
 	"time"
 )
@@ -144,4 +145,8 @@ func (this *CustomFieldMilvus2x) CheckLoadStatus(ctx context.Context, collection
 			return err
 		}
 	}
+}
+
+func (cus *CustomFieldMilvus2x) StartBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
+	return cus.Milvus2x.StartBatchInsert(ctx, collection, data)
 }

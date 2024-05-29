@@ -7,6 +7,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/dbclient"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/internal/util/retry"
+	"github.com/zilliztech/milvus-migration/storage/milvus2x"
 	"go.uber.org/zap"
 	"time"
 )
@@ -27,7 +28,7 @@ type CustomMilvus2xLoader struct {
 }
 
 func NewCusFieldMilvus2xLoader(cfg *config.MigrationConfig) (*CustomMilvus2xLoader, error) {
-	client, err := dbclient.NewMilvus2xClient(cfg.Milvus2xCfg)
+	client, err := dbclient.NewMilvus2xClient(cfg.TargetMilvus2xCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (this *CustomMilvus2xLoader) Before(ctx context.Context) error {
 	return this.beforeStatistics(ctx)
 }
 
-func (this *CustomMilvus2xLoader) Write2Milvus(ctx context.Context, fileName string, collection string) (int64, error) {
+func (this *CustomMilvus2xLoader) WriteByBulkInsert(ctx context.Context, fileName string, collection string) (int64, error) {
 
 	log.LL(ctx).Info("[Loader] Begin to load json file to milvus",
 		zap.String("collection", collection), zap.String("fileName", fileName))
@@ -118,4 +119,10 @@ func (this *CustomMilvus2xLoader) compareResult(ctx context.Context) error {
 		zap.Int("totalIncrease", afterTotalCount-beforeTotalCount))
 
 	return nil
+}
+
+func (this *CustomMilvus2xLoader) WriteByBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
+
+	log.LL(ctx).Info("[Loader] Begin to write data by batchInsert sdk to milvus", zap.String("collection", collection))
+	return this.CusMilvus2x.StartBatchInsert(ctx, collection, data)
 }

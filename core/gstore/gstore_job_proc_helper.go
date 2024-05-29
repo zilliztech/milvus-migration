@@ -4,8 +4,8 @@ import (
 	"github.com/zilliztech/milvus-migration/core/data"
 )
 
-func InitProcessHandler(jobId string) {
-	ph := data.NewProcessHandler()
+func InitProcessHandler(jobId string, mode string) {
+	ph := data.NewProcessHandler(mode)
 	SetProcessHandler(jobId, ph)
 }
 

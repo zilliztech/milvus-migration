@@ -1,5 +1,17 @@
 package milvustype
 
+// MilvusCfg ：yml文件meta部分需要迁移到目前milvus2x配置信息
+type MilvusCfg struct {
+	Collection        string `json:"collection"` //if empty, will use the source collection name
+	Dims              int    `json:"dims"`
+	ShardNum          int    `json:"shardNum"`          //default value is 2
+	CloseDynamicField bool   `json:"closeDynamicField"` //default value: false
+	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
+	LoadData          bool   `json:"loadData"`          //default value: false
+	CreateIndex       bool   `json:"createIndex"`       //default value: false
+}
+
+// SegColInfo 下面是Milvus1x结构
 type SegColInfo struct {
 	CollectionName string `json:"collection"`
 	SegmentName    string `json:"segment"`

@@ -96,7 +96,7 @@ func Start(ctx context.Context, configFile string, jobId string) error {
 	}
 
 	//管理进度处理器
-	gstore.InitProcessHandler(jobId)
+	gstore.InitProcessHandler(jobId, migrCfg.DumperWorkCfg.WorkMode)
 
 	starter, err := migration.NewStarter(migrCfg, jobId)
 	if err != nil {

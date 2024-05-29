@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/common"
+	convert "github.com/zilliztech/milvus-migration/core/transform/common"
 	"github.com/zilliztech/milvus-migration/core/transform/es/parser"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
@@ -61,17 +62,6 @@ var SupportESTypeMap = map[string]entity.FieldType{
 	string(Object):      entity.FieldTypeJSON,
 }
 
-var VarcharMaxLenNum = 65535
-var VarcharMaxLen = strconv.Itoa(VarcharMaxLenNum)
-
-var ConsistencyLevelMap = map[string]entity.ConsistencyLevel{
-	"Strong":     entity.ClStrong,
-	"Session":    entity.ClSession,
-	"Bounded":    entity.ClBounded,
-	"Eventually": entity.ClEventually,
-	"Customized": entity.ClCustomized,
-}
-
 func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 
 	fields, err := ToMilvusFields(idxCfg)
@@ -85,7 +75,7 @@ func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 		EnableDynamicField: !idxCfg.MilvusCfg.CloseDynamicField,
 	}
 	if len(idxCfg.MilvusCfg.ConsistencyLevel) > 0 {
-		val, ok := ConsistencyLevelMap[idxCfg.MilvusCfg.ConsistencyLevel]
+		val, ok := convert.ConsistencyLevelMap[idxCfg.MilvusCfg.ConsistencyLevel]
 		if !ok {
 			log.Error("es transform to milvus consistencyLevel value invalid: " + idxCfg.MilvusCfg.ConsistencyLevel)
 			return nil, err
@@ -123,7 +113,7 @@ func ToMilvusFields(idxCfg *estype.IdxCfg) ([]*entity.Field, error) {
 		//field specify config
 		switch field.Type {
 		case string(Text), string(Keyword), string(String):
-			var maxLen = VarcharMaxLen
+			var maxLen = convert.VarcharMaxLen
 			if field.MaxLen > 0 {
 				maxLen = strconv.Itoa(field.MaxLen)
 			}
@@ -144,7 +134,7 @@ func DefaultPKField() *entity.Field {
 		PrimaryKey: true,
 		AutoID:     false,
 		TypeParams: map[string]string{
-			entity.TypeParamMaxLength: VarcharMaxLen,
+			entity.TypeParamMaxLength: convert.VarcharMaxLen,
 		},
 	}
 }
@@ -160,7 +150,7 @@ func ToMilvusCollectionName(idx *estype.IdxCfg) string {
 // ToShardNum :default shardNum set :MAX_SHARD_NUM
 func ToShardNum(shardNum int) int {
 	if shardNum <= 0 {
-		return common.MAX_SHARD_NUM
+		return common.DEF_SHARD_NUM
 	}
 	return shardNum
 }

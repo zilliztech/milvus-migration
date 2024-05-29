@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
+	"github.com/zilliztech/milvus-migration/core/type/milvus2xtype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
 	"hash/fnv"
@@ -18,17 +19,18 @@ type MigrationConfig struct {
 	MetaConfig *MetaConfig
 
 	// source
-	SourceMode      string // local, remote
-	SourceTablesDir string
-	SourceRemote    *RemoteConfig
-	SourceFaissFile string
-	SourceESConfig  *ESConfig
+	SourceMode           string // local, remote
+	SourceTablesDir      string
+	SourceRemote         *RemoteConfig
+	SourceFaissFile      string
+	SourceESConfig       *ESConfig
+	SourceMilvus2xConfig *Milvus2xConfig
 
 	// target
-	TargetMode      string
-	TargetOutputDir string
-	Milvus2xCfg     *Milvus2xConfig
-	TargetRemote    *RemoteConfig
+	TargetMode        string
+	TargetOutputDir   string
+	TargetMilvus2xCfg *Milvus2xConfig
+	TargetRemote      *RemoteConfig
 
 	// dumper
 	DumperWorkLimit int
@@ -72,6 +74,9 @@ type Milvus2xConfig struct {
 	Endpoint string
 	UserName string
 	Password string
+
+	Version   string //internal param
+	hashCache atomic.Uint32
 }
 
 type CollectionConfig struct {
@@ -94,7 +99,8 @@ type MetaConfig struct {
 	// remote meta
 	RemoteMetaFile string
 
-	EsMeta *estype.MetaJSON
+	EsMeta       *estype.MetaJSON
+	Milvus2xMeta *milvus2xtype.MetaJSON
 }
 
 type DumperWorkConfig struct {
@@ -153,6 +159,17 @@ type RemoteConfig struct {
 }
 
 func (r *ESConfig) Hash() uint32 {
+
+	cache := r.hashCache.Load()
+	if cache != 0 {
+		return cache
+	}
+	hashCode := getHashCode(r)
+	r.hashCache.Store(hashCode)
+	return hashCode
+}
+
+func (r *Milvus2xConfig) Hash() uint32 {
 
 	cache := r.hashCache.Load()
 	if cache != 0 {
