@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/zilliztech/milvus-migration/core/cleaner"
+	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/dumper"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/loader"
@@ -87,12 +88,14 @@ func Start(ctx context.Context, configFile string, jobId string) error {
 		return err
 	}
 
-	//record: es dump will split many small json file task
-	gstore.InitFileTask(jobId)
-
 	migrCfg, err := stepConfig(configFile)
 	if err != nil {
 		return err
+	}
+
+	if migrCfg.DumperWorkCfg.WorkMode == string(common.Elasticsearch) {
+		//record: es dump will split many small json file task
+		gstore.InitFileTask(jobId)
 	}
 
 	//管理进度处理器

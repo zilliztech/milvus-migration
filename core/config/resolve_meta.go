@@ -21,7 +21,7 @@ func resolveMetaConfig(v *viper.Viper, dumpMode common.DumpMode) (*MetaConfig, e
 	case "local":
 		return resolveMetaInLocal(v)
 	case "config":
-		return resolveMetaInConfig(v, dumpMode)
+		return resolveMetaInConfig(v, metaMode, dumpMode)
 	case "sqlite":
 		return resolveMetaInSqlite(v)
 	case "mysql":
@@ -68,12 +68,12 @@ func resolveMetaInLocal(v *viper.Viper) (*MetaConfig, error) {
 	}, nil
 }
 
-func resolveMetaInConfig(v *viper.Viper, mode common.DumpMode) (*MetaConfig, error) {
+func resolveMetaInConfig(v *viper.Viper, metaMode string, mode common.DumpMode) (*MetaConfig, error) {
 	switch mode {
 	case common.Elasticsearch:
 		return resolveEsMeta(v)
 	case common.Milvus2x:
-		return resolveMilvus2xMeta(v)
+		return resolveMilvus2xMeta(v, metaMode)
 	default:
 		return nil, errors.New("meta mode 'config' have not support work in" + string(mode))
 	}

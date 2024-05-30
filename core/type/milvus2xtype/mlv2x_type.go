@@ -1,7 +1,6 @@
 package milvus2xtype
 
 import (
-	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/type/milvustype"
 )
 
@@ -15,10 +14,6 @@ type CollectionCfg struct {
 	Rows       int64                 `json:"rows"`
 	Fields     []FieldCfg            `json:"fields"`
 	MilvusCfg  *milvustype.MilvusCfg `json:"milvus"`
-
-	InnerPkField *FieldCfg
-	InnerPkType  *entity.FieldType
-	//InnerHasPK   bool
 }
 
 type FieldCfg struct {

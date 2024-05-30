@@ -68,6 +68,7 @@ func (milvus2xSource *Milvus2xSource) Close() error {
 	if cli != nil {
 		cli.VerCli.Close()
 	}
-	close(milvus2xSource.DataChannel)
+	//放在创建的位置close，否则报错情况会执行不到close,导致另一个go线程不会退出，导致等待完成的线程无法执行到会卡住不报错
+	//close(milvus2xSource.DataChannel)
 	return nil
 }

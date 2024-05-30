@@ -62,7 +62,7 @@ func ToMilvusFields(collEntity *entity.Collection, collCfg *milvus2xtype.Collect
 				if srcField.PrimaryKey {
 					existPKField = true
 				}
-				if srcField.DataType == entity.FieldTypeFloatVector {
+				if convert.IsVectorField(srcField) {
 					existVectorField = true
 				}
 			}

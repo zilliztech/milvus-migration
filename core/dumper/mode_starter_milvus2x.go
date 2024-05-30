@@ -41,15 +41,16 @@ func (dp *Dumper) WorkInMilvus2x(ctx context.Context, collCfg *milvus2xtype.Coll
 
 func (dp *Dumper) ReadData2Channel(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, dataChannel chan *milvus2x.Milvus2xData) error {
 
-	//设置进度相关信息：dump & load 总数量
-	gstore.GetProcessHandler(dp.jobId).SetDumpTotalSize(collCfg.Rows)
-	gstore.GetProcessHandler(dp.jobId).SetLoadTotalSize(collCfg.Rows)
-
 	source := source.NewMilvus2xSource(collCfg, dp.cfg, dataChannel)
 	data, err := source.ReadFirst(ctx)
 	if err != nil {
 		return err
 	}
+
+	//设置进度相关信息：dump & load 总数量
+	gstore.GetProcessHandler(dp.jobId).SetDumpTotalSize(collCfg.Rows)
+	gstore.GetProcessHandler(dp.jobId).SetLoadTotalSize(collCfg.Rows)
+	//已完成dump数量
 	gstore.GetProcessHandler(dp.jobId).AddDumpedSize(data.Columns[0].Len(), ctx)
 
 	return dp.LoopReadData(ctx, source)

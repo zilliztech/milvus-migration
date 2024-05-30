@@ -74,6 +74,9 @@ func (milvus23 *Milvus23VerClient) IterateNext(ctx context.Context) (*Milvus2xDa
 	columns := make([]entity.Column, 0, len(rs))
 	for _, col := range rs {
 		columns = append(columns, col)
+		if common.DEBUG {
+			log.Info("[Milvus2x] iterateNext data ======>", zap.String("colName", col.Name()), zap.Any("colLen", col.Len()))
+		}
 	}
 	if common.DEBUG {
 		log.Info("[Milvus2x] iterateNext data ======>", zap.Float64("Cost", time.Since(start).Seconds()))

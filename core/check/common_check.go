@@ -3,6 +3,7 @@ package check
 import (
 	"errors"
 	"github.com/zilliztech/milvus-migration/core/common"
+	"strconv"
 	"strings"
 )
 
@@ -22,7 +23,7 @@ func verifyCollNameIsOk(collection string) bool {
 
 func verifyShardNum(shardNum int) error {
 	if shardNum > common.MAX_SHARD_NUM {
-		return errors.New("[Verify Meta file] Milvus shardNum can not > " + string(common.MAX_SHARD_NUM))
+		return errors.New("[Verify Meta file] Milvus shardNum can not > " + strconv.Itoa(common.MAX_SHARD_NUM))
 	}
 	return nil
 }

@@ -121,8 +121,8 @@ func (this *CustomMilvus2xLoader) compareResult(ctx context.Context) error {
 	return nil
 }
 
-func (this *CustomMilvus2xLoader) WriteByBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
+func (this *CustomMilvus2xLoader) WriteByBatchInsert(ctx context.Context, data *milvus2x.Milvus2xData) error {
 
-	log.LL(ctx).Info("[Loader] Begin to write data by batchInsert sdk to milvus", zap.String("collection", collection))
-	return this.CusMilvus2x.StartBatchInsert(ctx, collection, data)
+	log.LL(ctx).Info("[Loader] Begin to write data by batchInsert sdk to milvus", zap.String("collection", this.runtimeCollectionNames[0]))
+	return this.CusMilvus2x.StartBatchInsert(ctx, this.runtimeCollectionNames[0], data)
 }

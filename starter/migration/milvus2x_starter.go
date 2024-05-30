@@ -30,15 +30,24 @@ func (starter *Starter) migrationMilvus2x(ctx context.Context) error {
 
 func (starter *Starter) DumpLoadInMilvus2x(ctx context.Context, collCfg *milvus2xtype.CollectionCfg) error {
 
-	DataChannel := make(chan *milvus2x.Milvus2xData, 200)
+	dataChannel := make(chan *milvus2x.Milvus2xData, 200)
 
 	var g errgroup.Group
 	g.Go(func() error {
-		return starter.loadByBatchInsert(ctx, collCfg, DataChannel)
+		err := starter.loadByBatchInsert(ctx, collCfg, dataChannel)
+		if err != nil {
+			log.Error("LoadByBatchInsert err", zap.Error(err))
+		}
+		return err
 	})
 
 	g.Go(func() error {
-		return starter.dumpByIterator(ctx, collCfg, DataChannel)
+		err := starter.dumpByIterator(ctx, collCfg, dataChannel)
+		close(dataChannel) //放在线程结束处close
+		if err != nil {
+			log.Error("DumpByIterator err", zap.Error(err))
+		}
+		return err
 	})
 
 	err := g.Wait()
@@ -53,7 +62,6 @@ func (starter *Starter) dumpByIterator(ctx context.Context, collCfg *milvus2xtyp
 	if err != nil {
 		return err
 	}
-	close(dataChannel)
 	return nil
 }
 
@@ -66,7 +74,7 @@ func (starter *Starter) loadByBatchInsert(ctx context.Context, collCfg *milvus2x
 	}
 
 	for data := range dataChannel {
-		err := starter.Loader.WriteByBatchInsert(ctx, collCfg.Collection, data)
+		err := starter.Loader.WriteByBatchInsert(ctx, data)
 		if err != nil {
 			return err
 		}

@@ -15,3 +15,11 @@ var ConsistencyLevelMap = map[string]entity.ConsistencyLevel{
 	"Eventually": entity.ClEventually,
 	"Customized": entity.ClCustomized,
 }
+
+func IsVectorField(srcField *entity.Field) bool {
+	return srcField.DataType == entity.FieldTypeFloatVector ||
+		srcField.DataType == entity.FieldTypeBinaryVector ||
+		srcField.DataType == entity.FieldTypeSparseVector ||
+		srcField.DataType == entity.FieldTypeBFloat16Vector ||
+		srcField.DataType == entity.FieldTypeFloat16Vector
+}

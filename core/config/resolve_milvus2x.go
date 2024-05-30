@@ -6,7 +6,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/type/milvus2xtype"
 )
 
-func resolveMilvus2xMeta(v *viper.Viper) (*MetaConfig, error) {
+func resolveMilvus2xMeta(v *viper.Viper, metaMode string) (*MetaConfig, error) {
 	milvusVersion := v.GetString("meta.version")
 	milvusColName := v.GetString("meta.collection")
 
@@ -28,7 +28,7 @@ func resolveMilvus2xMeta(v *viper.Viper) (*MetaConfig, error) {
 		CollCfgs: collCfgs,
 	}
 	return &MetaConfig{
-		MetaMode:     "config",
+		MetaMode:     metaMode,
 		Milvus2xMeta: milvus2xMeta,
 	}, nil
 }
