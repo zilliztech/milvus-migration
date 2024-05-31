@@ -49,7 +49,25 @@ func GetMilvusConsistencyLevel(collCfg *milvus2xtype.CollectionCfg, collEntity *
 }
 
 func ToMilvusFields(collEntity *entity.Collection, collCfg *milvus2xtype.CollectionCfg) ([]*entity.Field, error) {
+	if collCfg.Fields != nil && len(collCfg.Fields) > 0 {
+		return fillCustomFileds(collEntity, collCfg)
+	} else {
+		return fillAllFileds(collEntity, collCfg)
+	}
+}
 
+func fillAllFileds(collEntity *entity.Collection, collCfg *milvus2xtype.CollectionCfg) ([]*entity.Field, error) {
+
+	queryFields := make([]milvus2xtype.FieldCfg, 0)
+
+	for _, srcField := range collEntity.Schema.Fields {
+		queryFields = append(queryFields, milvus2xtype.FieldCfg{Name: srcField.Name})
+	}
+	collCfg.Fields = queryFields
+	return collEntity.Schema.Fields, nil
+}
+
+func fillCustomFileds(collEntity *entity.Collection, collCfg *milvus2xtype.CollectionCfg) ([]*entity.Field, error) {
 	var _fields []*entity.Field
 
 	var existPKField = false

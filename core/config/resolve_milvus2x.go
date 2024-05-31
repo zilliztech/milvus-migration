@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/spf13/viper"
 	"github.com/zilliztech/milvus-migration/core/type/milvus2xtype"
+	"github.com/zilliztech/milvus-migration/internal/log"
 )
 
 func resolveMilvus2xMeta(v *viper.Viper, metaMode string) (*MetaConfig, error) {
@@ -84,7 +85,9 @@ func resolveMilvus2xFieldsSimple(v *viper.Viper) ([]milvus2xtype.FieldCfg, error
 	//注意：这里v.Get()会把里面的key全部转成小写, 如： maxLen -> maxlen
 	ymlFields, ok := v.Get("meta.fields").([]interface{})
 	if !ok {
-		return nil, errors.New("meta.fields format invalid")
+		log.Info("meta.fields param not exists, will migrate all fields")
+		return nil, nil //返回nil 将同步所有字段，会在convert过程填充
+		//return nil, errors.New("meta.fields format invalid")
 	}
 
 	milvus2xFields := make([]milvus2xtype.FieldCfg, 0)

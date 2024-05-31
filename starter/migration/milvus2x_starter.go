@@ -30,11 +30,16 @@ func (starter *Starter) migrationMilvus2x(ctx context.Context) error {
 
 func (starter *Starter) DumpLoadInMilvus2x(ctx context.Context, collCfg *milvus2xtype.CollectionCfg) error {
 
-	dataChannel := make(chan *milvus2x.Milvus2xData, 200)
+	initTask := task.NewMilvus2xInitTasker(collCfg, starter.MigrCfg.SourceMilvus2xConfig)
+	err := initTask.Init(ctx, starter.Loader)
+	if err != nil {
+		return err
+	}
 
+	dataChannel := make(chan *milvus2x.Milvus2xData, 200)
 	var g errgroup.Group
 	g.Go(func() error {
-		err := starter.loadByBatchInsert(ctx, collCfg, dataChannel)
+		err := starter.loadByBatchInsert(ctx, dataChannel)
 		if err != nil {
 			log.Error("LoadByBatchInsert err", zap.Error(err))
 		}
@@ -50,7 +55,7 @@ func (starter *Starter) DumpLoadInMilvus2x(ctx context.Context, collCfg *milvus2
 		return err
 	})
 
-	err := g.Wait()
+	err = g.Wait()
 	if err != nil {
 		return err
 	}
@@ -65,14 +70,7 @@ func (starter *Starter) dumpByIterator(ctx context.Context, collCfg *milvus2xtyp
 	return nil
 }
 
-func (starter *Starter) loadByBatchInsert(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, dataChannel chan *milvus2x.Milvus2xData) error {
-
-	initTask := task.NewMilvus2xInitTasker(collCfg, starter.MigrCfg.SourceMilvus2xConfig)
-	err := initTask.Init(ctx, starter.Loader)
-	if err != nil {
-		return err
-	}
-
+func (starter *Starter) loadByBatchInsert(ctx context.Context, dataChannel chan *milvus2x.Milvus2xData) error {
 	for data := range dataChannel {
 		err := starter.Loader.WriteByBatchInsert(ctx, data)
 		if err != nil {

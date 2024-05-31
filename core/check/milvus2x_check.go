@@ -10,9 +10,11 @@ import (
 func VerifyMilvus2xMetaCfg(metaJson *milvus2xtype.MetaJSON) error {
 
 	for _, coll := range metaJson.CollCfgs {
-		if len(coll.Fields) <= 0 {
-			return errors.New("[Verify Milvus2x Meta file] Index migration Field is empty, Collection:" + coll.Collection)
-		}
+
+		//if len(coll.Fields) <= 0 {
+		//	return errors.New("[Verify Milvus2x Meta file] Index migration Field is empty, Collection:" + coll.Collection)
+		//}
+
 		if coll.MilvusCfg == nil {
 			coll.MilvusCfg = &milvustype.MilvusCfg{ShardNum: 0} //当没定义时，会用source collection shardNum
 		}
