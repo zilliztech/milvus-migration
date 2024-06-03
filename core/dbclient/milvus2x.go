@@ -34,7 +34,8 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 
 	var milvus client.Client
 	var err error
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	if cfg.UserName == "" {
 		log.Info("[Milvus2x] find username is empty, will use NewDefaultGrpcClient() to new client")
