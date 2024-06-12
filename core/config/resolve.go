@@ -11,6 +11,22 @@ import (
 
 func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 
+	// first get workMode
+	dumperWorkMode, err := resolveWorkMode(v)
+	if err != nil {
+		return nil, err
+	}
+	//202405: milvus2x use iterator/batchInsert not need source/target mode param
+	dumpMode := common.DumpMode(dumperWorkMode)
+	if dumpMode == common.Milvus2x {
+		return assertBatchInsertMode(v, dumpMode)
+	} else {
+		return assertBulkInsertMode(v, dumpMode)
+	}
+}
+
+func assertBulkInsertMode(v *viper.Viper, dumpMode common.DumpMode) (*MigrationConfig, error) {
+
 	dumpWrkLimit := v.GetInt("dumper.worker.limit")
 	if dumpWrkLimit <= 0 {
 		dumpWrkLimit = 2
@@ -21,13 +37,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		loadWrkLimit = 2
 	}
 
-	// first get workMode
-	dumperWorkMode, err := resolveWorkMode(v)
-	if err != nil {
-		return nil, err
-	}
-
-	sourceMode, err := assertSourceMode(v, dumperWorkMode)
+	sourceMode, err := assertSourceMode(v, dumpMode)
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +66,10 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		SourceMode:   sourceMode,
 		SourceRemote: resolveSourceRemoteConfig(v),
 
-		TargetMode:      targetMode,
-		TargetOutputDir: targetOutputDir,
-		Milvus2xCfg:     resolveMilvus2xConfig(v),
-		TargetRemote:    resolveTargetRemoteConfig(v),
+		TargetMode:        targetMode,
+		TargetOutputDir:   targetOutputDir,
+		TargetMilvus2xCfg: resolveTargetMilvus2xConfig(v),
+		TargetRemote:      resolveTargetRemoteConfig(v),
 
 		// dumper
 		DumperWorkLimit: dumpWrkLimit,
@@ -70,7 +80,7 @@ func ResolveInsConfig(v *viper.Viper) (*MigrationConfig, error) {
 		LoaderWorkCfg:   loadWorkCfg,
 	}
 
-	switch common.DumpMode(dumperWorkMode) {
+	switch dumpMode {
 	case common.Faiss:
 		sourceFaissFile, err := getFaissFileBySourceMode(sourceMode, v)
 		if err != nil {
@@ -166,10 +176,10 @@ func getOutputDirByRemote(v *viper.Viper) string {
 	return strings.TrimPrefix(outputDir, "/")
 }
 
-func assertSourceMode(v *viper.Viper, dumperWorkMode string) (string, error) {
+func assertSourceMode(v *viper.Viper, dumpMode common.DumpMode) (string, error) {
 
-	if common.DumpMode(dumperWorkMode) == common.Elasticsearch {
-		//es not need source mode param
+	//es not need source mode param
+	if dumpMode == common.Elasticsearch {
 		return common.EMPTY, nil
 	}
 
@@ -204,7 +214,7 @@ func resolveRemoteConfig(prefix string, v *viper.Viper) *RemoteConfig {
 	}
 }
 
-func resolveMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
+func resolveTargetMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
 	return &Milvus2xConfig{
 		Endpoint: v.GetString("target.milvus2x.endpoint"),
 		UserName: v.GetString("target.milvus2x.username"),
@@ -283,11 +293,66 @@ func resolveWorkMode(v *viper.Viper) (string, error) {
 	workMode := v.GetString("dumper.worker.workMode")
 
 	switch common.DumpMode(workMode) {
-	case common.Faiss, common.Milvus1x, common.Elasticsearch:
+	case common.Faiss, common.Milvus1x, common.Elasticsearch, common.Milvus2x:
 		break
 	default:
 		return "", errors.New("[dumper.worker.workMode] not support " + workMode)
 	}
 
 	return workMode, nil
+}
+
+func assertBatchInsertMode(v *viper.Viper, dumpMode common.DumpMode) (*MigrationConfig, error) {
+	dumpWorkCfg, err := resolveMilvus2xDumpWorkConfig(v, dumpMode)
+	if err != nil {
+		return nil, err
+	}
+	loadWorkCfg := &LoaderWorkConfig{
+		WorkMode: dumpWorkCfg.WorkMode,
+	}
+	metaCfg, err := resolveMetaConfig(v, common.Milvus2x)
+	if err != nil {
+		return nil, err
+	}
+	cfg := MigrationConfig{
+		SourceMilvus2xConfig: resolveSourceMilvus2xConfig(v),
+		TargetMilvus2xCfg:    resolveTargetMilvus2xConfig(v),
+		// dumper
+		DumperWorkCfg:   dumpWorkCfg,
+		DumperWorkLimit: dumpWorkCfg.Limit,
+		//loader
+		LoaderWorkCfg:   loadWorkCfg,
+		LoaderWorkLimit: dumpWorkCfg.Limit,
+		MetaConfig:      metaCfg,
+	}
+	return &cfg, nil
+}
+
+func resolveMilvus2xDumpWorkConfig(v *viper.Viper, workMode common.DumpMode) (*DumperWorkConfig, error) {
+	dumpWrkLimit := v.GetInt("dumper.worker.limit")
+	if dumpWrkLimit <= 0 {
+		dumpWrkLimit = 1
+	}
+	var writerBufferSize = v.GetInt("dumper.worker.writer.bufferSize")
+	if writerBufferSize <= 0 {
+		writerBufferSize = 1000
+	}
+	var readerBufferSize = v.GetInt("dumper.worker.reader.bufferSize")
+	if readerBufferSize <= 0 {
+		writerBufferSize = 1000
+	}
+	return &DumperWorkConfig{
+		WorkMode:         string(workMode),
+		ReaderBufferSize: readerBufferSize,
+		WriterBufferSize: writerBufferSize,
+		Limit:            dumpWrkLimit,
+	}, nil
+}
+
+func resolveSourceMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
+	return &Milvus2xConfig{
+		Endpoint: v.GetString("source.milvus2x.endpoint"),
+		UserName: v.GetString("source.milvus2x.username"),
+		Password: v.GetString("source.milvus2x.password"),
+	}
 }

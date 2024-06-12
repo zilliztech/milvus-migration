@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"github.com/shopspring/decimal"
+	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
@@ -17,18 +18,24 @@ type ProcessHandler struct {
 	DumpTotalSize  int64
 	DumpFinishSize *atomic.Int64 //record rows
 
-	LoadFinish        bool
+	LoadFinish bool
+	//es record files
 	LoadTotalFiles    *atomic.Int32 //record files
 	LoadUnFinishFiles int32
+	//milvus2x record load nums
+	LoadTotalSize  int64
+	LoadFinishSize *atomic.Int64
 
 	lastPercent int
+	mode        string
 }
 
-func NewProcessHandler() *ProcessHandler {
+func NewProcessHandler(mode string) *ProcessHandler {
 	return &ProcessHandler{
 		DumpFinishSize: atomic.NewInt64(0),
-
 		LoadTotalFiles: atomic.NewInt32(0),
+		LoadFinishSize: atomic.NewInt64(0),
+		mode:           mode,
 	}
 }
 
@@ -54,6 +61,14 @@ func (p *ProcessHandler) SetUnLoadSize(processingCount int32, ctx context.Contex
 	}
 }
 
+func (p *ProcessHandler) SetLoadTotalSize(totalSize int64) {
+	p.LoadTotalSize = totalSize
+}
+func (p *ProcessHandler) AddLoadSize(increment int, ctx context.Context) {
+	p.LoadFinishSize.Add(int64(increment))
+	log.LL(ctx).Info("=================>JobProcess!", zap.Int("Percent", p.CalcProcess()))
+}
+
 func (p *ProcessHandler) CalcProcess() int {
 	percent := p.calcProcess0()
 	if percent > p.lastPercent {
@@ -66,20 +81,53 @@ func (p *ProcessHandler) calcProcess0() int {
 		return Hundred_Percent
 	}
 	if p.DumpFinish {
-		var unLoad = p.LoadUnFinishFiles
-		if unLoad == 0 {
+		if common.DumpMode(p.mode) == common.Elasticsearch {
+			return calcByLoadFilesProc(p)
+		} else if common.DumpMode(p.mode) == common.Milvus2x {
+			return calcByInsertDataProc(p)
+		} else {
 			return Half_Percent
 		}
-		totalLoad := p.LoadTotalFiles.Load()
-		up := decimal.NewFromInt(int64(totalLoad - unLoad))
-		down := decimal.NewFromInt(int64(totalLoad))
-		return Half_Percent + int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
 	} else {
-		if p.DumpTotalSize == 0 {
-			return One_Percent
-		}
-		up := decimal.NewFromInt(p.DumpFinishSize.Load())
-		down := decimal.NewFromInt(p.DumpTotalSize)
-		return int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
+		return calcDumpProc(p)
 	}
+}
+
+func calcDumpProc(p *ProcessHandler) int {
+	if p.DumpTotalSize == 0 {
+		return One_Percent
+	}
+	up := decimal.NewFromInt(p.DumpFinishSize.Load())
+	down := decimal.NewFromInt(p.DumpTotalSize)
+	percent := int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
+	if percent > Half_Percent {
+		return Half_Percent
+	}
+	return percent
+}
+
+func calcByInsertDataProc(p *ProcessHandler) int {
+	loadSize := p.LoadFinishSize.Load()
+	if loadSize == 0 {
+		return Half_Percent
+	}
+	up := decimal.NewFromInt(loadSize)
+	down := decimal.NewFromInt(p.LoadTotalSize)
+	percent := Half_Percent + int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
+	//milvus count 接口不是准确的rows, 这样的话可能出现percent > 100情况
+	if percent > Hundred_Percent {
+		return Hundred_Percent
+	}
+	return percent
+}
+
+func calcByLoadFilesProc(p *ProcessHandler) int {
+	var unLoad = p.LoadUnFinishFiles
+	if unLoad == 0 {
+		return Half_Percent
+	}
+	totalLoad := p.LoadTotalFiles.Load()
+	up := decimal.NewFromInt(int64(totalLoad - unLoad))
+	down := decimal.NewFromInt(int64(totalLoad))
+	return Half_Percent + int(up.DivRound(down, 2).Mul(decimal.NewFromInt(Half_Percent)).IntPart())
 }

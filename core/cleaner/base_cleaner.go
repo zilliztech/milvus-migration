@@ -15,6 +15,14 @@ type Clean interface {
 }
 
 func NewCleaner(cfg *config.MigrationConfig, jobId string) (*Cleaner, error) {
+
+	if len(cfg.TargetMode) == 0 {
+		return &Cleaner{
+			jobId:   jobId,
+			cleaner: newNoneCleaner(cfg.TargetMode),
+		}, nil
+	}
+
 	var clr Clean
 
 	switch cfg.TargetMode {

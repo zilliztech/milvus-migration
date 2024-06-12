@@ -11,6 +11,7 @@ const (
 	Faiss         DumpMode = "faiss"
 	Milvus1x      DumpMode = "milvus1x"
 	Elasticsearch DumpMode = "elasticsearch"
+	Milvus2x      DumpMode = "milvus2x"
 )
 
 type SourceMode string
@@ -40,6 +41,7 @@ const (
 
 // reader type
 const (
+	MILVUS2X   = "milvus2x"
 	ES         = "es"
 	RV         = "rv"
 	UID        = "uid"
@@ -47,8 +49,9 @@ const (
 	FAISS_DATA = "faiss-data"
 )
 
-// current Milvus support max shard num is 2
-var MAX_SHARD_NUM = 2
+// current Milvus support max shard num: https://milvus.io/docs/v2.3.x/create_collection.md#Create-a-collection-with-the-schema
+var MAX_SHARD_NUM = 16
+var DEF_SHARD_NUM = 2
 
 var DEBUG = false
 var DUMP_SUB_TASK_NUM = 3

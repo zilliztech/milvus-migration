@@ -3,7 +3,7 @@
 ## Overview
 
 [milvus-migration](https://github.com/zilliztech/milvus-migration) is a data migration tool
-for [Milvus](https://milvus.io/) that supports importing **Milvus 0.9.x ~ 1.x** / **faiss** / **elasticsearch7.x+**
+for [Milvus](https://milvus.io/) that supports importing **Milvus 0.9.x ~ 1.x** / **faiss** / **elasticsearch7.x+** / **Milvus2.3+**
 datas to milvus 2.x.
 
 ## Architecture
@@ -31,12 +31,12 @@ datas to milvus 2.x.
 
 - Data Format Support
 
-| Source Data Type         | Target Data Type |
-|:-------------------------|:-----------------|
-| Milvus 0.9.x - 1.x       | Milvus 2.x       |
-| Elasticsearch 7.x-8.x    | Milvus 2.x       |
-| Faiss (Beta)             | Milvus 2.x       |
-| Milvus 2.x (in progress) | Milvus 2.x       |
+| Source Data Type      | Target Data Type |
+|:----------------------|:-----------------|
+| Milvus 0.9.x - 1.x    | Milvus 2.x       |
+| Elasticsearch 7.x-8.x | Milvus 2.x       |
+| Faiss (Beta)          | Milvus 2.x       |
+| Milvus 2.3 +          | Milvus 2.x       |
 
 ### How to use this tool?
 
@@ -77,6 +77,10 @@ Run the command `start` to migration es->2.x. here `start` == `dump && load` cmd
 ```shell
 ./milvus-migration start
 ```
+5. Milvus 2.3+  to Milvus2.x migration:
+```shell
+./milvus-migration start
+```
 
 ## Migration Examples (migration.yaml details)
 
@@ -88,6 +92,7 @@ how to learn more about using migration tool, see examples doc below:
    milvux2.x : [migrate_1.x_doc](README_1X.md).
 3. faiss -> milvux2.x (
    Beta) : [migrate_faiss_doc](README_FAISS.md).
+4. milvus2.x -> milvux2.x : [migrate_milvus2x_doc](README_2X.md).
 
 ## How to verify migration result
 When migration finished, you can use visual tool `Attu` or use Milvus SDK verify your new collection data rows.
@@ -105,7 +110,6 @@ After the Milvus collection Data migration is completed, we can use SDK or `Attu
 
 - [ ] Support Redis to Milvus 2.x
 - [ ] Support Mongodb to Milvus 2.x
-- [ ] Milvus 2.x to Milvus 2.x
 - [ ] Support others datasource to Milvus 2.x
 - [ ] Supports binary vectors
 

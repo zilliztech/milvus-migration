@@ -41,7 +41,7 @@ func (submiter Submitter) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		taskId, err := submiter.Loader.GetMilvusLoader().Write2Milvus(ctx, task.fn, task.cn)
+		taskId, err := submiter.Loader.GetMilvusLoader().WriteByBulkInsert(ctx, task.fn, task.cn)
 		if err != nil {
 			return err
 		}

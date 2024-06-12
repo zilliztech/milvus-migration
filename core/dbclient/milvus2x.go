@@ -8,6 +8,7 @@ import (
 	"github.com/zilliztech/milvus-migration/core/common"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/internal/log"
+	"github.com/zilliztech/milvus-migration/storage/milvus2x"
 	"go.uber.org/zap"
 	"strconv"
 	"time"
@@ -33,7 +34,8 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 
 	var milvus client.Client
 	var err error
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	if cfg.UserName == "" {
 		log.Info("[Milvus2x] find username is empty, will use NewDefaultGrpcClient() to new client")
@@ -213,4 +215,14 @@ func (this *Milvus2x) WaitBulkLoadSuccess(ctx context.Context, taskId int64) err
 			return nil
 		}
 	}
+}
+
+func (this *Milvus2x) StartBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
+	_, err := this.milvus.Insert(ctx, collection, "", data.Columns...)
+	if err != nil {
+		log.L().Info("[Loader] BatchInsert return err", zap.Error(err))
+		return err
+	}
+	log.LL(ctx).Info("[Loader] success to batchInsert to Milvus", zap.String("col", collection))
+	return nil
 }

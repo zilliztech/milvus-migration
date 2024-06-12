@@ -38,7 +38,7 @@ type Milvus2xLoader struct {
 }
 
 func NewMilvus2xLoader(cfg *config.MigrationConfig, jobId string) (*Milvus2xLoader, error) {
-	client, err := dbclient.NewMilvus2xClient(cfg.Milvus2xCfg)
+	client, err := dbclient.NewMilvus2xClient(cfg.TargetMilvus2xCfg)
 	if err != nil {
 		return nil, err
 	}

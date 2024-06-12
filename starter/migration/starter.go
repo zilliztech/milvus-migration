@@ -54,6 +54,8 @@ func (starter *Starter) doByWorkMode(ctx context.Context) error {
 	switch common.DumpMode(starter.WorkMode) {
 	case common.Elasticsearch:
 		return starter.migrationES(ctx)
+	case common.Milvus2x:
+		return starter.migrationMilvus2x(ctx)
 	default:
 		return fmt.Errorf("not support Starter WorkMode %s", starter.WorkMode)
 	}
