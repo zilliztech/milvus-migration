@@ -14,7 +14,7 @@ require (
 	github.com/lingdor/stackerror v0.0.0-20191119040541-976d8885ed76
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/milvus-io/milvus-sdk-go v1.1.1
-	github.com/milvus-io/milvus-sdk-go/v2 v2.4.1-0.20240530093539-f4779551f949
+	github.com/milvus-io/milvus-sdk-go/v2 v2.4.1
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
