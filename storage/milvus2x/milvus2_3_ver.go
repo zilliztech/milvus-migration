@@ -43,11 +43,17 @@ func (milvus23 *Milvus23VerClient) InitIterator(ctx context.Context, collCfg *mi
 	collCfg.Rows = count
 
 	log.Info("start iterator milvus collection", zap.String("collection", collCfg.Collection),
-		zap.Int("BatchSize", batchSize))
+		zap.Int("BatchSize", batchSize), zap.Int64("CollectionRow", count))
 	fieldNames := make([]string, 0, len(collCfg.Fields))
 	for _, fieldCfg := range collCfg.Fields {
+		if collCfg.MilvusCfg.AutoId && fieldCfg.PK {
+			continue
+		}
 		fieldNames = append(fieldNames, fieldCfg.Name)
 	}
+	log.Info("start iterator milvus collection", zap.Any("migration fieldName", fieldNames))
+	log.Info("start iterator milvus collection", zap.Any("migration milvusCfg", collCfg.MilvusCfg))
+	log.Info("start iterator milvus collection", zap.Any("migration fields", collCfg.Fields))
 	iteratorParam := client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithOutputFields(fieldNames...)
 	iterator, err := milvus23._milvus.QueryIterator(ctx, iteratorParam)
 	if err != nil {

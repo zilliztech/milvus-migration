@@ -9,6 +9,8 @@ type MilvusCfg struct {
 	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
 	LoadData          bool   `json:"loadData"`          //default value: false
 	CreateIndex       bool   `json:"createIndex"`       //default value: false
+	AutoId            bool   `json:"autoId"`
+	PkName            string `json:"pkName"`
 }
 
 // SegColInfo 下面是Milvus1x结构

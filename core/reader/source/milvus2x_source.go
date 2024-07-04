@@ -6,7 +6,9 @@ import (
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/factory/milvus2x_factory"
 	"github.com/zilliztech/milvus-migration/core/type/milvus2xtype"
+	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/storage/milvus2x"
+	"go.uber.org/zap"
 )
 
 var DefaultSize = 100
@@ -48,8 +50,21 @@ func (milvus2xSource *Milvus2xSource) ReadFirst(ctx context.Context) (*milvus2x.
 	if data.IsEmpty {
 		return nil, errors.New("milvus2x collection data is empty")
 	}
+	log.Info("milvus2x dumpMilvusData", zap.Any("columnCount", len(data.Columns)))
+	milvus2xSource.removePKColIfOpenAutoId(data)
 	milvus2xSource.DataChannel <- data
 	return data, nil
+}
+
+func (milvus2xSource *Milvus2xSource) removePKColIfOpenAutoId(data *milvus2x.Milvus2xData) {
+	if milvus2xSource.CollCfg.MilvusCfg.AutoId {
+		for idx, dataColumn := range data.Columns {
+			if dataColumn.Name() == milvus2xSource.CollCfg.MilvusCfg.PkName {
+				delPkColList := append(data.Columns[:idx], data.Columns[idx+1:]...)
+				data.Columns = delPkColList
+			}
+		}
+	}
 }
 
 func (milvus2xSource *Milvus2xSource) ReadNext(ctx context.Context) (*milvus2x.Milvus2xData, error) {
@@ -58,6 +73,7 @@ func (milvus2xSource *Milvus2xSource) ReadNext(ctx context.Context) (*milvus2x.M
 		return nil, err
 	}
 	if !data.IsEmpty {
+		milvus2xSource.removePKColIfOpenAutoId(data)
 		milvus2xSource.DataChannel <- data
 	}
 	return data, nil

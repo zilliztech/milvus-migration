@@ -24,10 +24,15 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 		log.Error("milvus2x transform to custom Milvus field type error", zap.Error(err))
 		return nil, err
 	}
+	//collCfg.MilvusCfg.AutoId = srcCollEntity.Schema.AutoID
+	//log.Info("milvus2x transform to custom Milvus", zap.Any("milvusCfg AutoId", collCfg.MilvusCfg.AutoId))
+	//log.Info("milvus2x transform to custom Milvus", zap.Any("srcColl AutoId", srcCollEntity.Schema.AutoID))
 	param := &common.CollectionParam{
 		CollectionName:     ToMilvusCollectionName(collCfg),
 		ShardsNum:          ToShardNum(collCfg.MilvusCfg.ShardNum, srcCollEntity),
 		EnableDynamicField: !collCfg.MilvusCfg.CloseDynamicField,
+		AutoId:             collCfg.MilvusCfg.AutoId,
+		Description:        "Migration from Milvus2x",
 	}
 	param.ConsistencyLevel, err = GetMilvusConsistencyLevel(collCfg, srcCollEntity)
 	if err != nil {
@@ -61,7 +66,13 @@ func fillAllFileds(collEntity *entity.Collection, collCfg *milvus2xtype.Collecti
 	queryFields := make([]milvus2xtype.FieldCfg, 0)
 
 	for _, srcField := range collEntity.Schema.Fields {
-		queryFields = append(queryFields, milvus2xtype.FieldCfg{Name: srcField.Name})
+		cfgField := milvus2xtype.FieldCfg{Name: srcField.Name, PK: srcField.PrimaryKey}
+		queryFields = append(queryFields, cfgField)
+		if srcField.PrimaryKey {
+			log.Info("milvus2x transform to fillAllFields Milvus", zap.Any("srcField AutoId", srcField.AutoID))
+			collCfg.MilvusCfg.AutoId = srcField.AutoID
+			collCfg.MilvusCfg.PkName = srcField.Name
+		}
 	}
 	collCfg.Fields = queryFields
 	return collEntity.Schema.Fields, nil
@@ -79,6 +90,10 @@ func fillCustomFileds(collEntity *entity.Collection, collCfg *milvus2xtype.Colle
 				matchField = srcField
 				if srcField.PrimaryKey {
 					existPKField = true
+					field.PK = true
+					log.Info("milvus2x transform to fillCustomFields Milvus", zap.Any("srcField AutoId", srcField.AutoID))
+					collCfg.MilvusCfg.AutoId = srcField.AutoID
+					collCfg.MilvusCfg.PkName = srcField.Name
 				}
 				if convert.IsVectorField(srcField) {
 					existVectorField = true

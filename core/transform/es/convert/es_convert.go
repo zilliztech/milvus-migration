@@ -73,6 +73,8 @@ func ToMilvusParam(idxCfg *estype.IdxCfg) (*common.CollectionInfo, error) {
 		CollectionName:     ToMilvusCollectionName(idxCfg),
 		ShardsNum:          ToShardNum(idxCfg.MilvusCfg.ShardNum),
 		EnableDynamicField: !idxCfg.MilvusCfg.CloseDynamicField,
+		AutoId:             false,
+		Description:        "Migration from Elasticsearch",
 	}
 	if len(idxCfg.MilvusCfg.ConsistencyLevel) > 0 {
 		val, ok := convert.ConsistencyLevelMap[idxCfg.MilvusCfg.ConsistencyLevel]

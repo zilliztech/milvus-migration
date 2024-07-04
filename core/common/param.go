@@ -21,6 +21,8 @@ type CollectionParam struct {
 	ShardsNum          int
 	EnableDynamicField bool
 	ConsistencyLevel   *entity.ConsistencyLevel
+	AutoId             bool
+	Description        string //collection description
 	// not common value
 	FileMapKey string
 }
