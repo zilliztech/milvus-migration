@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync/atomic"
 
 	"golang.org/x/time/rate"
@@ -113,13 +114,16 @@ type CopyPathInput struct {
 	DestBucket string
 	DestKeyFn  func(attr ObjectAttr) string
 
+	// optional
+	CopySuffix string
+
 	// OnSuccess when an object copy success, this func will be call
 	// May be executed concurrently, please pay attention to thread safety
 	OnSuccess func(attr ObjectAttr)
 }
 
 // getAttrs get all attrs under bucket/prefix
-func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string) ([]ObjectAttr, error) {
+func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string, copySuffix string) ([]ObjectAttr, error) {
 	var attrs []ObjectAttr
 
 	p := c.src.ListObjectsPage(ctx, ListObjectPageInput{Bucket: bucket, Prefix: prefix})
@@ -132,6 +136,11 @@ func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string) ([]ObjectA
 			if attr.IsEmpty() {
 				continue
 			}
+
+			if copySuffix != "" && !strings.HasSuffix(attr.Key, copySuffix) {
+				continue
+			}
+
 			attrs = append(attrs, attr)
 			c.totalSize.Add(uint64(attr.Length))
 			c.cnt.Add(1)
@@ -143,7 +152,7 @@ func (c *Copier) getAttrs(ctx context.Context, bucket, prefix string) ([]ObjectA
 
 // CopyPrefix Copy all files under src path
 func (c *Copier) CopyPrefix(ctx context.Context, i CopyPathInput) error {
-	srcAttrs, err := c.getAttrs(ctx, i.SrcBucket, i.SrcPrefix)
+	srcAttrs, err := c.getAttrs(ctx, i.SrcBucket, i.SrcPrefix, i.CopySuffix)
 	if err != nil {
 		return fmt.Errorf("storage: copier get src attrs %w", err)
 	}
