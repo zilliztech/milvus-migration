@@ -75,6 +75,9 @@ type Milvus2xConfig struct {
 	UserName string
 	Password string
 
+	GrpcMaxRecvMsgSize int
+	GrpcMaxSendMsgSize int
+
 	Version   string //internal param
 	hashCache atomic.Uint32
 }

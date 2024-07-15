@@ -216,9 +216,11 @@ func resolveRemoteConfig(prefix string, v *viper.Viper) *RemoteConfig {
 
 func resolveTargetMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
 	return &Milvus2xConfig{
-		Endpoint: v.GetString("target.milvus2x.endpoint"),
-		UserName: v.GetString("target.milvus2x.username"),
-		Password: v.GetString("target.milvus2x.password"),
+		Endpoint:           v.GetString("target.milvus2x.endpoint"),
+		UserName:           v.GetString("target.milvus2x.username"),
+		Password:           v.GetString("target.milvus2x.password"),
+		GrpcMaxRecvMsgSize: v.GetInt("target.milvus2x.grpc.maxCallRecvMsgSize"),
+		GrpcMaxSendMsgSize: v.GetInt("target.milvus2x.grpc.maxCallSendMsgSize"),
 	}
 }
 
@@ -351,8 +353,10 @@ func resolveMilvus2xDumpWorkConfig(v *viper.Viper, workMode common.DumpMode) (*D
 
 func resolveSourceMilvus2xConfig(v *viper.Viper) *Milvus2xConfig {
 	return &Milvus2xConfig{
-		Endpoint: v.GetString("source.milvus2x.endpoint"),
-		UserName: v.GetString("source.milvus2x.username"),
-		Password: v.GetString("source.milvus2x.password"),
+		Endpoint:           v.GetString("source.milvus2x.endpoint"),
+		UserName:           v.GetString("source.milvus2x.username"),
+		Password:           v.GetString("source.milvus2x.password"),
+		GrpcMaxRecvMsgSize: v.GetInt("source.milvus2x.grpc.maxCallRecvMsgSize"),
+		GrpcMaxSendMsgSize: v.GetInt("source.milvus2x.grpc.maxCallSendMsgSize"),
 	}
 }
