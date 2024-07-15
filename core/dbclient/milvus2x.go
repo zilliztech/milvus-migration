@@ -10,6 +10,7 @@ import (
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"github.com/zilliztech/milvus-migration/storage/milvus2x"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"strconv"
 	"time"
 )
@@ -37,15 +38,30 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if cfg.UserName == "" {
-		log.Info("[Milvus2x] find username is empty, will use NewDefaultGrpcClient() to new client")
-		milvus, err = client.NewDefaultGrpcClient(ctx, cfg.Endpoint)
-	} else {
-		log.Info("[Milvus2x] find username not empty, will use NewDefaultGrpcClientWithURI() to new client")
-		milvus, err = client.NewDefaultGrpcClientWithURI(ctx, cfg.Endpoint, cfg.UserName, cfg.Password)
-	}
+	//if cfg.UserName == "" {
+	//	log.Info("[Milvus2x] find username is empty, will use NewDefaultGrpcClient() to new client")
+	//	milvus, err = client.NewDefaultGrpcClient(ctx, cfg.Endpoint)
+	//} else {
+	//	log.Info("[Milvus2x] find username not empty, will use NewDefaultGrpcClientWithURI() to new client")
+	//	milvus, err = client.NewDefaultGrpcClientWithURI(ctx, cfg.Endpoint, cfg.UserName, cfg.Password)
+	//}
+	//if err != nil {
+	//	log.Error("[Milvus2x] new milvus client error", zap.Error(err))
+	//	return nil, err
+	//}
+
+	milvus, err = client.NewClient(ctx, client.Config{
+		Address:  cfg.Endpoint,
+		Username: cfg.UserName,
+		Password: cfg.Password,
+		DialOptions: []grpc.DialOption{
+			grpc.WithDefaultCallOptions(
+				grpc.MaxCallRecvMsgSize(67108864),
+				grpc.MaxCallSendMsgSize(268435456),
+			),
+		},
+	})
 	if err != nil {
-		log.Error("[Milvus2x] new milvus client error", zap.Error(err))
 		return nil, err
 	}
 
