@@ -238,7 +238,7 @@ func (this *Milvus2x) WaitBulkLoadSuccess(ctx context.Context, taskId int64) err
 }
 
 func (this *Milvus2x) StartBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
-	_, err := this.milvus.Insert(ctx, collection, "", data.Columns...)
+	_, err := this.milvus.Upsert(ctx, collection, "", data.Columns...)
 	if err != nil {
 		log.L().Info("[Loader] BatchInsert return err", zap.Error(err))
 		return err
