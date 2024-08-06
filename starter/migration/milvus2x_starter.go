@@ -72,7 +72,7 @@ func (starter *Starter) dumpByIterator(ctx context.Context, collCfg *milvus2xtyp
 
 func (starter *Starter) loadByBatchInsert(ctx context.Context, dataChannel chan *milvus2x.Milvus2xData) error {
 	for data := range dataChannel {
-		err := starter.Loader.WriteByBatchInsert(ctx, data)
+		err := starter.Loader.BatchWrite(ctx, data)
 		if err != nil {
 			return err
 		}

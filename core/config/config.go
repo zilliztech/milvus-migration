@@ -78,6 +78,9 @@ type Milvus2xConfig struct {
 	GrpcMaxRecvMsgSize int
 	GrpcMaxSendMsgSize int
 
+	Database  string
+	WriteMode string //insert or upsert
+
 	Version   string //internal param
 	hashCache atomic.Uint32
 }

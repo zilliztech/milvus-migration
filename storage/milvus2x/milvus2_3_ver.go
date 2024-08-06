@@ -110,6 +110,7 @@ func (milvus23 *Milvus23VerClient) DescCollection(ctx context.Context, collectio
 	return collEntity, nil
 }
 
+// 这里统一给source创建milvus client, 和target区分开
 func _createMilvus23VerClient(cfg *config.Milvus2xConfig) (*Milvus23VerClient, error) {
 
 	log.Info("[Milvus23x] begin to new milvus client", zap.String("endPoint", cfg.Endpoint))
@@ -148,12 +149,19 @@ func _createMilvus23VerClient(cfg *config.Milvus2xConfig) (*Milvus23VerClient, e
 		return nil, err
 	}
 
-	log.Info("[Milvus23x] begin to test connect",
+	log.Info("[Milvus23x] begin to test source connect",
 		zap.String("endpoint", cfg.Endpoint),
 		zap.String("username", cfg.UserName),
+		zap.String("databaseName", cfg.Database),
 		zap.Int("GrpcMaxCallRecvMsgSize", cfg.GrpcMaxRecvMsgSize),
 		zap.Int("GrpcMaxCallSendMsgSize", cfg.GrpcMaxSendMsgSize))
 
+	if cfg.Database != "" && len(cfg.Database) > 0 {
+		err := milvus.UsingDatabase(ctx, cfg.Database)
+		if err != nil {
+			return nil, err
+		}
+	}
 	_, err = milvus.HasCollection(ctx, "test")
 	if err != nil {
 		return nil, err
