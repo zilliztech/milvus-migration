@@ -69,9 +69,9 @@ jobs:
         shell: bash
         working-directory: deployment/${{ matrix.milvus_2_x_mode }}
         run: |
-          docker-compose up -d
+          docker compose up -d
           bash ../../scripts/check_healthy.sh
-          docker-compose ps -a
+          docker compose ps -a
 
       - name: Prepare config
         shell: bash
