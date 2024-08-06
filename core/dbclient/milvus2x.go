@@ -28,6 +28,7 @@ func (this *Milvus2x) GetMilvus() client.Client {
 	return this.milvus
 }
 
+// NewMilvus2xClient 这里为 target milvus的统一创建入口，和source区分开
 func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 
 	log.Info("begin to new milvus2x client",
@@ -67,11 +68,20 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 		return nil, err
 	}
 
-	log.Info("[Milvus2x] begin to test connect",
+	log.Info("[Milvus2x] begin to test target connect",
 		zap.String("endpoint", cfg.Endpoint),
 		zap.String("username", cfg.UserName),
+		zap.String("databaseName", cfg.Database),
 		zap.Int("GrpcMaxCallRecvMsgSize", cfg.GrpcMaxRecvMsgSize),
 		zap.Int("GrpcMaxCallSendMsgSize", cfg.GrpcMaxSendMsgSize))
+
+	if cfg.Database != "" {
+		err = useDatabase(cfg, milvus, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	_, err = milvus.HasCollection(ctx, "test")
 	if err != nil {
 		return nil, err
@@ -82,6 +92,31 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 	}
 
 	return c, nil
+}
+
+func useDatabase(cfg *config.Milvus2xConfig, milvus client.Client, ctx context.Context) error {
+	dbs, err := milvus.ListDatabases(ctx)
+	if err != nil {
+		return err
+	}
+	var dbExists = false
+	for _, db := range dbs {
+		if db.Name == cfg.Database {
+			dbExists = true
+			break
+		}
+	}
+	if !dbExists {
+		err = milvus.CreateDatabase(ctx, cfg.Database)
+		if err != nil {
+			return err
+		}
+	}
+	err = milvus.UsingDatabase(ctx, cfg.Database)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (this *Milvus2x) CheckNeedCreateCollection(ctx context.Context, createParam *common.CollectionParam) error {
@@ -243,6 +278,16 @@ func (this *Milvus2x) StartBatchInsert(ctx context.Context, collection string, d
 		log.L().Info("[Loader] BatchInsert return err", zap.Error(err))
 		return err
 	}
-	log.LL(ctx).Info("[Loader] success to batchInsert to Milvus", zap.String("col", collection))
+	log.LL(ctx).Info("[Loader] success to BatchInsert to Milvus", zap.String("col", collection))
+	return nil
+}
+
+func (this *Milvus2x) StartBatchUpsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
+	_, err := this.milvus.Upsert(ctx, collection, "", data.Columns...)
+	if err != nil {
+		log.L().Info("[Loader] BatchUpsert return err", zap.Error(err))
+		return err
+	}
+	log.LL(ctx).Info("[Loader] success to BatchUpsert to Milvus", zap.String("col", collection))
 	return nil
 }

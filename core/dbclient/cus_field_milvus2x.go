@@ -150,3 +150,7 @@ func (this *CustomFieldMilvus2x) CheckLoadStatus(ctx context.Context, collection
 func (cus *CustomFieldMilvus2x) StartBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
 	return cus.Milvus2x.StartBatchInsert(ctx, collection, data)
 }
+
+func (cus *CustomFieldMilvus2x) StartBatchUpsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
+	return cus.Milvus2x.StartBatchUpsert(ctx, collection, data)
+}
