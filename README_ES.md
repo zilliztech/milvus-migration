@@ -173,6 +173,16 @@ target:
     useSSL: true
 ```
 
+- If want to migrate data to Target Milvus collection (isn't `default` database), you can add `target.milvus2x.database` to specify database name, database name will auto create if not exists.
+```yaml
+...
+    target:
+      milvus2x:
+        ...
+        database: my_database
+...
+```
+
 ## migration.yaml reference
 
 ### `dumper`
