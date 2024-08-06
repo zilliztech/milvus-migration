@@ -27,7 +27,7 @@ datas to milvus 2.x.
 |:-----------------------------------------|:------------------|
 | [Milvus](https://milvus.io/)             | 0.9.x, 1.x or 2.x |
 | [Elasticsearch](https://www.elastic.co/) | 7.x or  8.x       |
-| go                                       | 1.20.2 or later   |
+| go                                       | 1.22.2 or later   |
 
 - Data Format Support
 
