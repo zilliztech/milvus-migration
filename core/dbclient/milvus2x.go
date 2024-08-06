@@ -75,7 +75,7 @@ func NewMilvus2xClient(cfg *config.Milvus2xConfig) (*Milvus2x, error) {
 		zap.Int("GrpcMaxCallRecvMsgSize", cfg.GrpcMaxRecvMsgSize),
 		zap.Int("GrpcMaxCallSendMsgSize", cfg.GrpcMaxSendMsgSize))
 
-	if cfg.Database != "" && len(cfg.Database) > 0 {
+	if cfg.Database != "" {
 		err = useDatabase(cfg, milvus, ctx)
 		if err != nil {
 			return nil, err

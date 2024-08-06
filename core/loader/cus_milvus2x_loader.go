@@ -124,7 +124,7 @@ func (this *CustomMilvus2xLoader) compareResult(ctx context.Context) error {
 func (this *CustomMilvus2xLoader) BatchWrite(ctx context.Context, data *milvus2x.Milvus2xData) error {
 
 	log.LL(ctx).Info("[Loader] Begin to batchWrite data to milvus", zap.String("collection", this.runtimeCollectionNames[0]))
-	if this.cfg.TargetMilvus2xCfg.WriteMode != "" && this.cfg.TargetMilvus2xCfg.WriteMode == common.UPSERT {
+	if this.cfg.TargetMilvus2xCfg.WriteMode == common.UPSERT {
 		return this.CusMilvus2x.StartBatchUpsert(ctx, this.runtimeCollectionNames[0], data)
 	} else {
 		return this.CusMilvus2x.StartBatchInsert(ctx, this.runtimeCollectionNames[0], data)
