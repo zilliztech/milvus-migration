@@ -133,3 +133,16 @@ meta:
         writeMode: upsert
 ...
 ```
+
+If want batch migrate multi-collections, now batch migration can be achieved by passing collection name parameters through script execution in a loop (It will replace the collection name in the yaml configuration file), script like below: 
+```bash
+#!/bin/bash
+
+collections=("collection1" "collection2" "collection3")
+
+for collection in "${collections[@]}"; do
+echo "BatchMigration==> $collection"
+./milvus-migration start -t="$collection" -c=/{YourConfigPath}/migration.yml
+done
+```
+[BatchCollectionMigration Script](https://github.com/zilliztech/milvus-migration/blob/main/testfiles/milvus2x/batch_collection_migration.sh)
