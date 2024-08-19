@@ -14,7 +14,7 @@ require (
 	github.com/lingdor/stackerror v0.0.0-20191119040541-976d8885ed76
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/milvus-io/milvus-sdk-go v1.1.1
-	github.com/milvus-io/milvus-sdk-go/v2 v2.4.1
+	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240819094545-542b5a0158c1
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/concurrent-map/v2 v2.0.1
@@ -130,5 +130,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/milvus-io/milvus-sdk-go/v2 => github.com/congqixia/milvus-sdk-go/v2 v2.0.0-20240819072515-04d118f1639d

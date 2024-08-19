@@ -189,6 +189,8 @@ github.com/milvus-io/milvus-proto/go-api/v2 v2.4.6 h1:rSkwp5Mg/7KBSUqXcrPBUgTQGZ
 github.com/milvus-io/milvus-proto/go-api/v2 v2.4.6/go.mod h1:1OIl0v5PQeNxIJhCvY+K55CBUOYDZevw9g9380u1Wek=
 github.com/milvus-io/milvus-sdk-go v1.1.1 h1:QseeGBb92T4ny5jSscaWJ+toG74p5zE0kaxFyeskWSE=
 github.com/milvus-io/milvus-sdk-go v1.1.1/go.mod h1:jyYc5vzEQS9V+ZrSL2h/oeKcYiixvKBV/TrxXbLu01w=
+github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240819094545-542b5a0158c1 h1:tmPS7djDZ0VrXmgp/UbWKDFwsBuIVTjF+p4jF4Pd3KI=
+github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240819094545-542b5a0158c1/go.mod h1:kQ7SuDWugDhCqEHIvokitjVO9CyATIFa+h1dHEk86Zc=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
 github.com/minio/md5-simd v1.1.2/go.mod h1:MzdKDxYpY2BT9XQFocsiZf/NKVtR7nkE4RoEpN+20RM=
 github.com/minio/minio-go/v7 v7.0.66 h1:bnTOXOHjOqv/gcMuiVbN9o2ngRItvqE774dG9nq0Dzw=
