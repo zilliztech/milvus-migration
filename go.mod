@@ -16,8 +16,10 @@ require (
 	github.com/milvus-io/milvus-sdk-go v1.1.1
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.1
 	github.com/minio/minio-go/v7 v7.0.66
+	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
@@ -90,7 +92,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.19 // indirect
-	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.3 // indirect
+	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.6 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -124,7 +126,9 @@ require (
 	golang.org/x/tools v0.16.1 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/milvus-io/milvus-sdk-go/v2 => github.com/congqixia/milvus-sdk-go/v2 v2.0.0-20240819072515-04d118f1639d

@@ -29,7 +29,7 @@ var startCmd = &cobra.Command{
 				return
 			}
 		}()
-		err := starter.Start(ctx, configFile, jobId)
+		err := starter.Start(ctx, configFile, collection, jobId)
 		if err != nil {
 			log.Error("[start migration error]", zap.Error(err))
 			return

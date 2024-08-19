@@ -14,6 +14,8 @@ type CollectionCfg struct {
 	Rows       int64                 `json:"rows"`
 	Fields     []FieldCfg            `json:"fields"`
 	MilvusCfg  *milvustype.MilvusCfg `json:"milvus"`
+
+	DynamicField bool //source collection Dynamic Field status, if it open, will sync $meta field data to target collection
 }
 
 type FieldCfg struct {

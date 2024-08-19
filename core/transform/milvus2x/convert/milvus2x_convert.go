@@ -18,6 +18,11 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 	if err != nil {
 		return nil, err
 	}
+	//当source是开启动态列表，并且 target也打开动态列属性，则动态列需要迁移(DynamicField=true)
+	collCfg.DynamicField = srcCollEntity.Schema.EnableDynamicField && !collCfg.MilvusCfg.CloseDynamicField
+
+	log.Info("milvus2x source collection_schema", zap.Bool("DynamicFieldStatus", collCfg.DynamicField),
+		zap.String("Collection", collCfg.Collection))
 
 	fields, err := ToMilvusFields(srcCollEntity, collCfg)
 	if err != nil {

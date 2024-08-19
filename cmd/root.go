@@ -9,6 +9,7 @@ import (
 
 var (
 	configFile string
+	collection string
 )
 
 var RootCmd = &cobra.Command{
@@ -22,7 +23,7 @@ var RootCmd = &cobra.Command{
 
 func Execute() {
 	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config YAML file of server")
-
+	RootCmd.PersistentFlags().StringVarP(&collection, "table", "t", "", "migration source ES index or Milvus collection")
 	RootCmd.Execute()
 }
 

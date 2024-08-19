@@ -107,6 +107,12 @@ func calcDumpProc(p *ProcessHandler) int {
 }
 
 func calcByInsertDataProc(p *ProcessHandler) int {
+	//fmt.Printf("xxxxxxxx: (%d) ", p.LoadTotalSize)
+	//数据量很少情况下，count milvus collection可能会返回为0
+	if p.LoadTotalSize <= 0 {
+		return One_Percent
+	}
+
 	loadSize := p.LoadFinishSize.Load()
 	if loadSize == 0 {
 		return Half_Percent
