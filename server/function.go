@@ -121,11 +121,11 @@ func handleStart(c *gin.Context) (interface{}, error) {
 	}()
 
 	if req.Async {
-		go starter.Start(log.NewContextWithRequestId(c.Request.Context()), "", jobId)
+		go starter.Start(log.NewContextWithRequestId(c.Request.Context()), "", "", jobId)
 		return param.NewJobResponse(jobId), nil
 	}
 
-	return param.NewJobResponse(jobId), starter.Start(c.Request.Context(), "", jobId)
+	return param.NewJobResponse(jobId), starter.Start(c.Request.Context(), "", "", jobId)
 }
 
 func handlePanic(_any any, jobId string) {

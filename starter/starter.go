@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/zilliztech/milvus-migration/core/cleaner"
 	"github.com/zilliztech/milvus-migration/core/common"
+	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/dumper"
 	"github.com/zilliztech/milvus-migration/core/gstore"
 	"github.com/zilliztech/milvus-migration/core/loader"
@@ -79,7 +80,11 @@ func Load(ctx context.Context, configFile string, param *param.LoadParam, jobId 
 	return nil
 }
 
-func Start(ctx context.Context, configFile string, jobId string) error {
+func Start(ctx context.Context, configFile string, collection string, jobId string) error {
+
+	if collection != "" {
+		fmt.Printf("Migration CmdParam Collection: %s Start..", collection)
+	}
 
 	start := time.Now()
 
@@ -91,6 +96,10 @@ func Start(ctx context.Context, configFile string, jobId string) error {
 	migrCfg, err := stepConfig(configFile)
 	if err != nil {
 		return err
+	}
+
+	if collection != "" {
+		replaceCollectionName(migrCfg, collection)
 	}
 
 	if migrCfg.DumperWorkCfg.WorkMode == string(common.Elasticsearch) {
@@ -118,9 +127,25 @@ func Start(ctx context.Context, configFile string, jobId string) error {
 	}
 	log.LL(ctx).Info("[Cleaner] clean file success!")
 
+	if collection != "" {
+		fmt.Printf("Migration CmdParam Collection: %s Done!", collection)
+	}
+
 	fmt.Printf("Migration Success! Job %s cost=[%f]\n", jobId, time.Since(start).Seconds())
 	printStartJobMessage(jobId)
 	return nil
+}
+
+func replaceCollectionName(migrCfg *config.MigrationConfig, collection string) {
+	if migrCfg.MetaConfig.Milvus2xMeta != nil {
+		migrCfg.MetaConfig.Milvus2xMeta.CollCfgs[0].Collection = collection
+		if migrCfg.MetaConfig.Milvus2xMeta.CollCfgs[0].MilvusCfg != nil {
+			migrCfg.MetaConfig.Milvus2xMeta.CollCfgs[0].MilvusCfg.Collection = collection
+		}
+	}
+	if migrCfg.MetaConfig.EsMeta != nil {
+		migrCfg.MetaConfig.EsMeta.IdxCfgs[0].MilvusCfg.Collection = collection
+	}
 }
 
 func printStartJobMessage(jobId string) {

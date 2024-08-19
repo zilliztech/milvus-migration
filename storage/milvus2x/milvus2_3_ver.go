@@ -52,10 +52,15 @@ func (milvus23 *Milvus23VerClient) InitIterator(ctx context.Context, collCfg *mi
 		}
 		fieldNames = append(fieldNames, fieldCfg.Name)
 	}
+	if collCfg.DynamicField {
+		fieldNames = append(fieldNames, common.MILVUS_META_FD) //把source 动态列也查出来
+	}
+
 	log.Info("start iterator milvus collection", zap.Any("migration fieldName", fieldNames))
 	log.Info("start iterator milvus collection", zap.Any("migration milvusCfg", collCfg.MilvusCfg))
 	log.Info("start iterator milvus collection", zap.Any("migration fields", collCfg.Fields))
 	iteratorParam := client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithOutputFields(fieldNames...)
+	//iteratorParam := client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithOutputFields("*")
 	iterator, err := milvus23._milvus.QueryIterator(ctx, iteratorParam)
 	if err != nil {
 		return err
@@ -80,9 +85,19 @@ func (milvus23 *Milvus23VerClient) IterateNext(ctx context.Context) (*Milvus2xDa
 	}
 	columns := make([]entity.Column, 0, len(rs))
 	for _, col := range rs {
-		columns = append(columns, col)
+		if col.Name() == common.MILVUS_META_FD {
+			data := col.(*entity.ColumnJSONBytes).Data()
+			dynamicCol := entity.NewColumnJSONBytes(common.EMPTY, data).WithIsDynamic(true)
+			columns = append(columns, dynamicCol)
+			log.Info("[Milvus2x] iterateNext data ======> $meta")
+		} else {
+			columns = append(columns, col)
+		}
 		if common.DEBUG {
 			log.Info("[Milvus2x] iterateNext data ======>", zap.String("colName", col.Name()), zap.Any("colLen", col.Len()))
+			log.Info("[Milvus2x] iterateNext data ======>", zap.String("colName", col.Name()), zap.Any("FieldData", col.FieldData().FieldName))
+			log.Info("[Milvus2x] iterateNext data ======>", zap.String("colName", col.Name()), zap.Any("IsDynamic", col.FieldData().IsDynamic))
+			log.Info("[Milvus2x] iterateNext data ======>", zap.String("colName", col.Name()), zap.Any("FieldDataVal", col.FieldData().String()))
 		}
 	}
 	if common.DEBUG {
