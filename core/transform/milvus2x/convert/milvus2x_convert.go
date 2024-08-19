@@ -29,6 +29,10 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 		log.Error("milvus2x transform to custom Milvus field type error", zap.Error(err))
 		return nil, err
 	}
+	Description := srcCollEntity.Schema.Description
+	if Description == "" {
+		Description = "Migration from Milvus2x"
+	}
 	//collCfg.MilvusCfg.AutoId = srcCollEntity.Schema.AutoID
 	//log.Info("milvus2x transform to custom Milvus", zap.Any("milvusCfg AutoId", collCfg.MilvusCfg.AutoId))
 	//log.Info("milvus2x transform to custom Milvus", zap.Any("srcColl AutoId", srcCollEntity.Schema.AutoID))
@@ -37,7 +41,8 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 		ShardsNum:          ToShardNum(collCfg.MilvusCfg.ShardNum, srcCollEntity),
 		EnableDynamicField: !collCfg.MilvusCfg.CloseDynamicField,
 		AutoId:             collCfg.MilvusCfg.AutoId,
-		Description:        "Migration from Milvus2x",
+		//Description:        "Migration from Milvus2x",
+		Description: Description,
 	}
 	param.ConsistencyLevel, err = GetMilvusConsistencyLevel(collCfg, srcCollEntity)
 	if err != nil {
