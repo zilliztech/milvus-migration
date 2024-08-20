@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"io"
-	"strconv"
 	"time"
 )
 
@@ -107,14 +106,24 @@ func (milvus23 *Milvus23VerClient) IterateNext(ctx context.Context) (*Milvus2xDa
 }
 
 func (milvus23 *Milvus23VerClient) Count(ctx context.Context, collCfg *milvus2xtype.CollectionCfg) (int64, error) {
-	stats, err := milvus23._milvus.GetCollectionStatistics(ctx, collCfg.Collection)
-	log.Info("[Milvus2x] GetCollectionStatistics ===>",
-		zap.String("collection", collCfg.Collection), zap.Any("stats", stats))
+
+	rs, err := milvus23._milvus.Query(ctx, collCfg.Collection, nil, "", []string{"count(*)"})
 	if err != nil {
 		return 0, err
 	}
-	count := stats["row_count"]
-	return strconv.ParseInt(count, 10, 64)
+	row := rs.GetColumn("count(*)").(*entity.ColumnInt64).Data()[0]
+	log.Info("[Milvus23x] Count(*) ===>", zap.String("collection", collCfg.Collection), zap.Any("row", row))
+	return row, nil
+
+	//下面方式不准：没考虑删除和growing
+	//stats, err := milvus23._milvus.GetCollectionStatistics(ctx, collCfg.Collection)
+	//log.Info("[Milvus2x] GetCollectionStatistics ===>",
+	//	zap.String("collection", collCfg.Collection), zap.Any("stats", stats))
+	//if err != nil {
+	//	return 0, err
+	//}
+	//count := stats["row_count"]
+	//return strconv.ParseInt(count, 10, 64)
 }
 
 func (milvus23 *Milvus23VerClient) DescCollection(ctx context.Context, collectionName string) (*entity.Collection, error) {
