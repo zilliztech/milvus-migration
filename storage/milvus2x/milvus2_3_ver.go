@@ -46,7 +46,7 @@ func (milvus23 *Milvus23VerClient) InitIterator(ctx context.Context, collCfg *mi
 		zap.Int("BatchSize", batchSize), zap.Int64("CollectionRow", count))
 	fieldNames := make([]string, 0, len(collCfg.Fields))
 	for _, fieldCfg := range collCfg.Fields {
-		if collCfg.MilvusCfg.AutoId && fieldCfg.PK {
+		if collCfg.MilvusCfg.AutoId == "true" && fieldCfg.PK {
 			continue
 		}
 		fieldNames = append(fieldNames, fieldCfg.Name)

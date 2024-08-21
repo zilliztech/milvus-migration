@@ -57,7 +57,7 @@ func (milvus2xSource *Milvus2xSource) ReadFirst(ctx context.Context) (*milvus2x.
 }
 
 func (milvus2xSource *Milvus2xSource) removePKColIfOpenAutoId(data *milvus2x.Milvus2xData) {
-	if milvus2xSource.CollCfg.MilvusCfg.AutoId {
+	if milvus2xSource.CollCfg.MilvusCfg.AutoId == "true" {
 		for idx, dataColumn := range data.Columns {
 			if dataColumn.Name() == milvus2xSource.CollCfg.MilvusCfg.PkName {
 				delPkColList := append(data.Columns[:idx], data.Columns[idx+1:]...)

@@ -9,7 +9,7 @@ type MilvusCfg struct {
 	ConsistencyLevel  string `json:"consistencyLevel"`  //default value: ""
 	LoadData          bool   `json:"loadData"`          //default value: false
 	CreateIndex       bool   `json:"createIndex"`       //default value: false
-	AutoId            bool   `json:"autoId"`
+	AutoId            string `json:"autoId"`            //"": copy source collection, "true":enableAutoId, "false":"closeAutoId",
 	PkName            string `json:"pkName"`
 }
 
