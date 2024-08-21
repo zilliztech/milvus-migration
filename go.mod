@@ -14,7 +14,7 @@ require (
 	github.com/lingdor/stackerror v0.0.0-20191119040541-976d8885ed76
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/milvus-io/milvus-sdk-go v1.1.1
-	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240819094545-542b5a0158c1
+	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240821073850-0c84a71df153
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/concurrent-map/v2 v2.0.1
@@ -33,7 +33,7 @@ require (
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/oauth2 v0.15.0
-	golang.org/x/sync v0.5.0
+	golang.org/x/sync v0.8.0
 	golang.org/x/time v0.5.0
 	google.golang.org/grpc v1.60.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -92,7 +92,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.19 // indirect
-	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.6 // indirect
+	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.10-0.20240819025435-512e3b98866a // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

@@ -51,7 +51,12 @@ func (cus *CustomFieldMilvus2x) hasCollection(ctx context.Context, collection st
 }
 
 func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collectionInfo *common.CollectionInfo) error {
-	log.Info("Begin to Create Custom field Milvus Collection,", zap.String("collection", collectionInfo.Param.CollectionName))
+	log.Info("Begin to Create Custom field Milvus Collection,",
+		zap.String("collection", collectionInfo.Param.CollectionName),
+		zap.Any("fields", collectionInfo.Fields),
+		zap.Bool("dynamicField", collectionInfo.Param.EnableDynamicField),
+		zap.Bool("autoId", collectionInfo.Param.AutoId),
+		zap.String("description", collectionInfo.Param.Description))
 	// schema
 	schema := &entity.Schema{
 		CollectionName:     collectionInfo.Param.CollectionName,

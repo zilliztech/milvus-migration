@@ -91,6 +91,10 @@ func resolveMilvusCfg(v *viper.Viper) *milvustype.MilvusCfg {
 			if ok {
 				milvus.Collection = collName
 			}
+			autoId, ok := milvusMap["autoid"].(string)
+			if ok {
+				milvus.AutoId = autoId
+			}
 			shardNum, ok := milvusMap["shardnum"].(int)
 			if ok {
 				milvus.ShardNum = shardNum
