@@ -82,6 +82,11 @@ meta:
     closeDynamicField: false      # If not, the source collection DynamicField prop will be used.
     shardNum: 2                   # If not, the source collection ShardNum prop will be used.
     consistencyLevel: Customized  # If not, the source collection consistencyLevel prop will be used.
+    #about autoId: default "", when want migration collection between Disable and Enable Auto property is very useful.
+    #if "" mean the source collection AutoId prop will be used. 
+    #if "true" mean enable AutoId, 
+    #if "false" mean disable AutoId,
+    autoId: "" 
   #......  
 ...
 ```
