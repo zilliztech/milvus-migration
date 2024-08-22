@@ -27,6 +27,8 @@ type CollectionParam struct {
 	FileMapKey string
 }
 type CollectionInfo struct {
-	Param  *CollectionParam
-	Fields []*entity.Field
+	Param        *CollectionParam
+	Fields       []*entity.Field
+	Partitions   []*entity.Partition
+	PartitionKey string
 }

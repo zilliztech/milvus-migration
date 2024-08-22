@@ -56,6 +56,8 @@ func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collection
 		zap.Any("fields", collectionInfo.Fields),
 		zap.Bool("dynamicField", collectionInfo.Param.EnableDynamicField),
 		zap.Bool("autoId", collectionInfo.Param.AutoId),
+		zap.String("partitionKey", collectionInfo.PartitionKey),
+		zap.Any("partitions", collectionInfo.Partitions),
 		zap.String("description", collectionInfo.Param.Description))
 	// schema
 	schema := &entity.Schema{
@@ -76,6 +78,19 @@ func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collection
 		log.Error("Create custom field milvus2x CreateCollection error",
 			zap.String("collection", collectionInfo.Param.CollectionName), zap.Error(err))
 		return err
+	}
+	if collectionInfo.PartitionKey == "" && collectionInfo.Partitions != nil {
+		for _, partition := range collectionInfo.Partitions {
+			if partition.Name == common.DEFAULT_PARTITION_NAME {
+				continue
+			}
+			err := cus.Milvus2x.milvus.CreatePartition(ctx, collectionInfo.Param.CollectionName, partition.Name)
+			if err != nil {
+				log.Error("Create custom field milvus2x Collection Partition error", zap.String("collection", collectionInfo.Param.CollectionName),
+					zap.String("partitionName", partition.Name), zap.Error(err))
+				return err
+			}
+		}
 	}
 	return nil
 }

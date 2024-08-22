@@ -134,6 +134,14 @@ func (milvus23 *Milvus23VerClient) DescCollection(ctx context.Context, collectio
 	return collEntity, nil
 }
 
+func (milvus23 *Milvus23VerClient) ShowPartitions(ctx context.Context, collectionName string) ([]*entity.Partition, error) {
+	partition, err := milvus23._milvus.ShowPartitions(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+	return partition, nil
+}
+
 // 这里统一给source创建milvus client, 和target区分开
 func _createMilvus23VerClient(cfg *config.Milvus2xConfig) (*Milvus23VerClient, error) {
 
