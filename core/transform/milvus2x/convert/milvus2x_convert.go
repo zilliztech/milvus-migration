@@ -21,8 +21,19 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 	//当source是开启动态列表，并且 target也打开动态列属性，则动态列需要迁移(DynamicField=true)
 	collCfg.DynamicField = srcCollEntity.Schema.EnableDynamicField && !collCfg.MilvusCfg.CloseDynamicField
 
+	//partition key
+	partitionKey := getPartitionKey(srcCollEntity)
+	//partition
+	var partitions []*entity.Partition = nil
+	if partitionKey == "" {
+		partitions, err = milvus2xCli.VerCli.ShowPartitions(ctx, collCfg.Collection)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	log.Info("milvus2x source collection_schema", zap.Bool("DynamicFieldStatus", collCfg.DynamicField),
-		zap.String("Collection", collCfg.Collection))
+		zap.String("Collection", collCfg.Collection), zap.String("PartitionKey", partitionKey), zap.Any("Partitions", partitions))
 
 	fields, err := ToMilvusFields(srcCollEntity, collCfg)
 	if err != nil {
@@ -54,7 +65,17 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 	if err != nil {
 		return nil, err
 	}
-	return &common.CollectionInfo{Param: param, Fields: fields}, err
+
+	return &common.CollectionInfo{Param: param, Fields: fields, Partitions: partitions, PartitionKey: partitionKey}, err
+}
+
+func getPartitionKey(collEntity *entity.Collection) string {
+	for _, field := range collEntity.Schema.Fields {
+		if field.IsPartitionKey {
+			return field.Name
+		}
+	}
+	return common.EMPTY
 }
 
 func GetMilvusConsistencyLevel(collCfg *milvus2xtype.CollectionCfg, collEntity *entity.Collection) (*entity.ConsistencyLevel, error) {

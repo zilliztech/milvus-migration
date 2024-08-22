@@ -62,3 +62,4 @@ const SUB_FILE_SIZE = 1024 * 1024 * 300
 
 const UPSERT = "upsert"
 const MILVUS_META_FD = "$meta"
+const DEFAULT_PARTITION_NAME = "_default"

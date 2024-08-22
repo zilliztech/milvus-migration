@@ -16,6 +16,7 @@ type Milvus2xVersClient interface {
 	IterateNext(ctx context.Context) (*Milvus2xData, error)
 	Close() error
 	DescCollection(ctx context.Context, collectionName string) (*entity.Collection, error)
+	ShowPartitions(ctx context.Context, collectionName string) ([]*entity.Partition, error)
 }
 
 type Milvus2xData struct {
