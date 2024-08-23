@@ -34,31 +34,17 @@ func NewMilvus23VerCli(Milvus2xConfig *config.Milvus2xConfig) (Milvus2xVersClien
 	return verCli, nil
 }
 
-func (milvus23 *Milvus23VerClient) InitIterator(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, batchSize int) error {
-
-	count, err := milvus23.Count(ctx, collCfg)
-	if err != nil {
-		return err
-	}
-	collCfg.Rows = count
+func (milvus23 *Milvus23VerClient) InitIterator(ctx context.Context, collCfg *milvus2xtype.CollectionCfg,
+	batchSize int, partition string, fieldNames []string) error {
 
 	log.Info("start iterator milvus collection", zap.String("collection", collCfg.Collection),
-		zap.Int("BatchSize", batchSize), zap.Int64("CollectionRow", count))
-	fieldNames := make([]string, 0, len(collCfg.Fields))
-	for _, fieldCfg := range collCfg.Fields {
-		if collCfg.MilvusCfg.AutoId == "true" && fieldCfg.PK {
-			continue
-		}
-		fieldNames = append(fieldNames, fieldCfg.Name)
+		zap.Int("BatchSize", batchSize), zap.String("CurrPartition", partition))
+	var iteratorParam *client.QueryIteratorOption
+	if partition != common.EMPTY {
+		iteratorParam = client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithPartitions(partition).WithOutputFields(fieldNames...)
+	} else {
+		iteratorParam = client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithOutputFields(fieldNames...)
 	}
-	if collCfg.DynamicField {
-		fieldNames = append(fieldNames, common.MILVUS_META_FD) //把source 动态列也查出来
-	}
-
-	log.Info("start iterator milvus collection", zap.Any("migration fieldName", fieldNames))
-	log.Info("start iterator milvus collection", zap.Any("migration milvusCfg", collCfg.MilvusCfg))
-	log.Info("start iterator milvus collection", zap.Any("migration fields", collCfg.Fields))
-	iteratorParam := client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithOutputFields(fieldNames...)
 	//iteratorParam := client.NewQueryIteratorOption(collCfg.Collection).WithBatchSize(batchSize).WithExpr(common.EMPTY).WithOutputFields("*")
 	iterator, err := milvus23._milvus.QueryIterator(ctx, iteratorParam)
 	if err != nil {

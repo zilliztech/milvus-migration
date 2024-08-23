@@ -86,7 +86,7 @@ func (cus *CustomFieldMilvus2x) createCollection(ctx context.Context, collection
 			}
 			err := cus.Milvus2x.milvus.CreatePartition(ctx, collectionInfo.Param.CollectionName, partition.Name)
 			if err != nil {
-				log.Error("Create custom field milvus2x Collection Partition error", zap.String("collection", collectionInfo.Param.CollectionName),
+				log.Error("Create custom field milvus2x Collection CurrPartition error", zap.String("collection", collectionInfo.Param.CollectionName),
 					zap.String("partitionName", partition.Name), zap.Error(err))
 				return err
 			}
