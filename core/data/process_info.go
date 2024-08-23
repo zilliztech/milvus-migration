@@ -66,7 +66,7 @@ func (p *ProcessHandler) SetLoadTotalSize(totalSize int64) {
 }
 func (p *ProcessHandler) AddLoadSize(increment int, ctx context.Context) {
 	p.LoadFinishSize.Add(int64(increment))
-	log.LL(ctx).Info("=================>JobProcess!", zap.Int("Percent", p.CalcProcess()))
+	log.LL(ctx).Info("=================>JobProcess!!", zap.Int("Percent", p.CalcProcess()))
 }
 
 func (p *ProcessHandler) CalcProcess() int {

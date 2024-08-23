@@ -203,7 +203,7 @@ func (this *Milvus2x) ShowCollectionRows(ctx context.Context, collections []stri
 
 		// print or not
 		if print {
-			log.LL(ctx).Info("[Milvus2x] Collection Static:", zap.String("collection", col),
+			log.LL(ctx).Info("[Milvus2x] Target Collection Static:", zap.String("collection", col),
 				zap.Int("rowCount", count))
 		}
 	}
@@ -273,21 +273,21 @@ func (this *Milvus2x) WaitBulkLoadSuccess(ctx context.Context, taskId int64) err
 }
 
 func (this *Milvus2x) StartBatchInsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
-	_, err := this.milvus.Insert(ctx, collection, "", data.Columns...)
+	_, err := this.milvus.Insert(ctx, collection, data.Partition, data.Columns...)
 	if err != nil {
 		log.L().Info("[Loader] BatchInsert return err", zap.Error(err))
 		return err
 	}
-	log.LL(ctx).Info("[Loader] success to BatchInsert to Milvus", zap.String("col", collection))
+	log.LL(ctx).Info("[Loader] success to BatchInsert to Milvus", zap.String("col", collection), zap.String("partition", data.Partition))
 	return nil
 }
 
 func (this *Milvus2x) StartBatchUpsert(ctx context.Context, collection string, data *milvus2x.Milvus2xData) error {
-	_, err := this.milvus.Upsert(ctx, collection, "", data.Columns...)
+	_, err := this.milvus.Upsert(ctx, collection, data.Partition, data.Columns...)
 	if err != nil {
 		log.L().Info("[Loader] BatchUpsert return err", zap.Error(err))
 		return err
 	}
-	log.LL(ctx).Info("[Loader] success to BatchUpsert to Milvus", zap.String("col", collection))
+	log.LL(ctx).Info("[Loader] success to BatchUpsert to Milvus", zap.String("col", collection), zap.String("partition", data.Partition))
 	return nil
 }

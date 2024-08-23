@@ -2,7 +2,6 @@ package source
 
 import (
 	"context"
-	"errors"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/factory/milvus2x_factory"
 	"github.com/zilliztech/milvus-migration/core/type/milvus2xtype"
@@ -14,12 +13,14 @@ import (
 var DefaultSize = 100
 
 type Milvus2xSource struct {
-	Cfg         *config.Milvus2xConfig
-	CollCfg     *milvus2xtype.CollectionCfg
-	Cli         *milvus2x.Milvus2xClient
-	ScrollId    string
-	BatchSize   int
-	DataChannel chan *milvus2x.Milvus2xData
+	Cfg           *config.Milvus2xConfig
+	CollCfg       *milvus2xtype.CollectionCfg
+	Cli           *milvus2x.Milvus2xClient
+	ScrollId      string
+	BatchSize     int
+	DataChannel   chan *milvus2x.Milvus2xData
+	CurrPartition string
+	FieldNames    []string
 }
 
 func NewMilvus2xSource(collCfg *milvus2xtype.CollectionCfg, dpCfg *config.MigrationConfig, dataChannel chan *milvus2x.Milvus2xData) *Milvus2xSource {
@@ -39,7 +40,8 @@ func NewMilvus2xSource(collCfg *milvus2xtype.CollectionCfg, dpCfg *config.Migrat
 }
 
 func (milvus2xSource *Milvus2xSource) ReadFirst(ctx context.Context) (*milvus2x.Milvus2xData, error) {
-	err := milvus2xSource.Cli.VerCli.InitIterator(ctx, milvus2xSource.CollCfg, milvus2xSource.BatchSize)
+	err := milvus2xSource.Cli.VerCli.InitIterator(ctx, milvus2xSource.CollCfg,
+		milvus2xSource.BatchSize, milvus2xSource.CurrPartition, milvus2xSource.FieldNames)
 	if err != nil {
 		return nil, err
 	}
@@ -48,10 +50,14 @@ func (milvus2xSource *Milvus2xSource) ReadFirst(ctx context.Context) (*milvus2x.
 		return nil, err
 	}
 	if data.IsEmpty {
-		return nil, errors.New("milvus2x collection data is empty")
+		log.Info("milvus2x collection partition data is empty", zap.Any("Partition", milvus2xSource.CurrPartition))
+		return nil, nil
 	}
-	log.Info("milvus2x dumpMilvusData", zap.Any("columnCount", len(data.Columns)))
+	log.Info("milvus2x dumpMilvusData", zap.Any("columnCount", len(data.Columns)),
+		zap.Any("Partition", milvus2xSource.CurrPartition))
+
 	milvus2xSource.removePKColIfOpenAutoId(data)
+	data.Partition = milvus2xSource.CurrPartition
 	milvus2xSource.DataChannel <- data
 	return data, nil
 }
@@ -74,6 +80,7 @@ func (milvus2xSource *Milvus2xSource) ReadNext(ctx context.Context) (*milvus2x.M
 	}
 	if !data.IsEmpty {
 		milvus2xSource.removePKColIfOpenAutoId(data)
+		data.Partition = milvus2xSource.CurrPartition
 		milvus2xSource.DataChannel <- data
 	}
 	return data, nil
@@ -87,4 +94,12 @@ func (milvus2xSource *Milvus2xSource) Close() error {
 	//放在创建的位置close，否则报错情况会执行不到close,导致另一个go线程不会退出，导致等待完成的线程无法执行到会卡住不报错
 	//close(milvus2xSource.DataChannel)
 	return nil
+}
+
+func (milvus2xSource *Milvus2xSource) Count(ctx context.Context, cfg *milvus2xtype.CollectionCfg) (int64, error) {
+	count, err := milvus2xSource.Cli.VerCli.Count(ctx, cfg)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

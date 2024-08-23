@@ -1,6 +1,7 @@
 package milvus2xtype
 
 import (
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/zilliztech/milvus-migration/core/type/milvustype"
 )
 
@@ -15,6 +16,7 @@ type CollectionCfg struct {
 	Fields     []FieldCfg            `json:"fields"`
 	MilvusCfg  *milvustype.MilvusCfg `json:"milvus"`
 
+	Partitions   []*entity.Partition
 	DynamicField bool //source collection Dynamic Field status, if it open, will sync $meta field data to target collection
 }
 

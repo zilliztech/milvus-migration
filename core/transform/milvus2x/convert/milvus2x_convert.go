@@ -30,6 +30,7 @@ func ToMilvusParam(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, mil
 		if err != nil {
 			return nil, err
 		}
+		collCfg.Partitions = partitions
 	}
 
 	log.Info("milvus2x source collection_schema", zap.Bool("DynamicFieldStatus", collCfg.DynamicField),

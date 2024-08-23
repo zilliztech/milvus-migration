@@ -12,7 +12,8 @@ import (
 const VER_2_3 = "2.3"
 
 type Milvus2xVersClient interface {
-	InitIterator(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, batchSize int) error
+	Count(ctx context.Context, collCfg *milvus2xtype.CollectionCfg) (int64, error)
+	InitIterator(ctx context.Context, collCfg *milvus2xtype.CollectionCfg, batchSize int, partition string, fieldNames []string) error
 	IterateNext(ctx context.Context) (*Milvus2xData, error)
 	Close() error
 	DescCollection(ctx context.Context, collectionName string) (*entity.Collection, error)
@@ -20,8 +21,9 @@ type Milvus2xVersClient interface {
 }
 
 type Milvus2xData struct {
-	Columns []entity.Column
-	IsEmpty bool
+	Columns   []entity.Column
+	IsEmpty   bool
+	Partition string
 }
 
 type Milvus2xClient struct {
