@@ -1,0 +1,32 @@
+dumper:
+  worker:
+    workMode: milvus2x
+    reader:
+      bufferSize: 500
+
+meta:
+  mode: config
+  version: 2.3
+#  prod_openai_biz_vector
+#  prod_openai_biz_knowledge
+#  prod_openai_biz_knowledge_table
+  collection: prod_openai_biz_knowledge_table
+
+#  milvus:
+#    closeDynamicField: true
+
+source:
+  milvus2x:
+    endpoint: https://in01-4c8f770199eee5a.ali-cn-hangzhou.vectordb.zilliz.com.cn:19530
+    username: zcloud_root
+    password:
+    grpc:
+      maxCallRecvMsgSize: 2684354560
+      maxCallSendMsgSize: 2684354560
+
+target:
+  milvus2x:
+    endpoint: https://in01-530cf17e8e6b5d3.ali-cn-hangzhou.vectordb.zilliz.com.cn:19530
+    username: zcloud_root
+    password:
+    writeMode: upsert
