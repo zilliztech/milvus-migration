@@ -16,19 +16,17 @@ require (
 	github.com/milvus-io/milvus-sdk-go v1.1.1
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240821073850-0c84a71df153
 	github.com/minio/minio-go/v7 v7.0.66
-	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.853
-	github.com/tidwall/gjson v1.17.0
+	github.com/tidwall/gjson v1.17.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.26.0
@@ -98,6 +96,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/opensearch-project/opensearch-go/v4 v4.3.0
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect

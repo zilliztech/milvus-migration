@@ -2,16 +2,18 @@ package es
 
 import (
 	"bytes"
+	"io"
+
 	"github.com/tidwall/gjson"
 	"github.com/zilliztech/milvus-migration/core/config"
 	"github.com/zilliztech/milvus-migration/core/type/estype"
 	"github.com/zilliztech/milvus-migration/internal/log"
 	"go.uber.org/zap"
-	"io"
 )
 
 const VER7 = "7"
 const VER8 = "8"
+const VER_OS = "o"
 
 type ESServerClient interface {
 	InitScroll(idxCfg *estype.IdxCfg, batchSize int) (*SearchRes, error)
@@ -45,6 +47,8 @@ func CreateESClient(esCfg *config.ESConfig) (*ESClient, error) {
 		esClient.Cli, err = NewES7ServerCli(esCfg)
 	case VER8:
 		esClient.Cli, err = NewES8ServerCli(esCfg)
+	case VER_OS:
+		esClient.Cli, err = NewOpenSearchServerCli(esCfg)
 	default:
 		log.Warn("ES version not contain, will use default sdk version", zap.String("Version", esCfg.Version))
 		esClient.Cli, err = NewES8ServerCli(esCfg)
