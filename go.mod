@@ -14,12 +14,10 @@ require (
 	github.com/lingdor/stackerror v0.0.0-20191119040541-976d8885ed76
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/milvus-io/milvus-sdk-go v1.1.1
-	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20240821073850-0c84a71df153
+	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2-0.20241108023218-1b1dd4740eb1
 	github.com/minio/minio-go/v7 v7.0.66
-	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
