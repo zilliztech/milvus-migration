@@ -1,7 +1,17 @@
 # Milvus Migration: migrate data to Milvus 2.x
 
-## Overview
+## Deprecated
+This Tool is currently deprecated, please use [VTS](https://github.com/zilliztech/vts) (Vector Transport Service) instead.
+VTS is a new tool that supports migrating data from various data sources to Milvus 2.x. It is more powerful and flexible than milvus-migration.
+- Milvus
+- Pinecone
+- Qdrant
+- Elasticsearch
+- PostgreSQL
+- Tencent Cloud VectorDB
+- .etc
 
+## Overview
 [milvus-migration](https://github.com/zilliztech/milvus-migration) is a data migration tool
 for [Milvus](https://milvus.io/) that supports importing **Milvus 0.9.x ~ 1.x** / **faiss** / **elasticsearch7.x+** / **Milvus2.3+**
 datas to milvus 2.x.
